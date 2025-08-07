@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Dance Generation Service
-# Creates dance videos and GIFs from motion sequences
-# Handles stick figure animation and video export
+Final Optimized Dance Generation Service
+- Clearer lines with better visibility
+- Smaller joint markers that don't obstruct
+- Slightly zoomed-in view
 """
 
 import numpy as np
@@ -11,6 +12,7 @@ import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import Axes3D
 from pathlib import Path
 from typing import List, Dict
+from matplotlib import colors as mcolors
 
 # Set matplotlib backend for headless generation
 import matplotlib
@@ -18,15 +20,14 @@ matplotlib.use('Agg')
 
 class DanceGenerationService:
     """
-    # Service for converting motion sequences to video files
-    # Input: Motion sequences → Output: GIF/MP4 files
+    Service for converting motion sequences to video files
+    Input: Motion sequences → Output: GIF/MP4 files
     """
     
     @staticmethod
     def smpl_to_stick_figure(motion_sequence, scale=10.0):
         """
-        # Convert SMPL motion to 3D stick figure coordinates
-        # Formula: Joint_pos = f(SMPL_pose) * scale_factor
+        Convert SMPL motion to 3D stick figure coordinates
         """
         num_frames, motion_dim = motion_sequence.shape
         poses = motion_sequence.reshape(num_frames, 24, 3) * scale
@@ -65,66 +66,73 @@ class DanceGenerationService:
     
     @staticmethod
     def create_dance_gif(stick_figures, output_path, title="AI Dance"):
-        """
-        # Create animated GIF from stick figure sequence
-        # Input: stick figure coordinates, output path
-        # Output: GIF file
-        """
-        print(f"🎬 Creating GIF: {output_path}")
+        print(f"🎬 Creating final optimized GIF: {output_path}")
         
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection='3d')
+        fig = plt.figure(figsize=(10, 8), facecolor='white')
+        ax = fig.add_subplot(111, projection='3d', facecolor='white')
         
-        # Set plot limits
-        ax.set_xlim([-2, 2])
-        ax.set_ylim([-2, 2])
-        ax.set_zlim([-2, 2])
-        ax.set_title(title)
+        # Set zoomed-in plot limits and viewing angle
+        ax.set_xlim([-1.5, 1.5])
+        ax.set_ylim([-1.5, 1.5])
+        ax.set_zlim([-1.5, 1.5])
+        ax.set_title(title, fontsize=14, pad=20)
+        ax.view_init(elev=20, azim=60)
         
-        # Initialize lines
-        body_lines = []
-        colors = ['blue', 'red', 'green', 'orange', 'purple']
+        # Configure transparent panes and grid
+        ax.xaxis.pane.set_alpha(0.05)
+        ax.yaxis.pane.set_alpha(0.05)
+        ax.zaxis.pane.set_alpha(0.05)
+        ax.grid(True, linestyle='--', color='gray', alpha=0.3)
         
-        for i in range(5):  # 5 body segments
-            line, = ax.plot([], [], [], color=colors[i], linewidth=3)
-            body_lines.append(line)
+        # Define body connections with more visible colors
+        BODY_CONNECTIONS = [
+            # (joints, color, linewidth)
+            (['pelvis', 'spine', 'head'], 'navy', 3.0),  # Darker blue
+            (['left_shoulder', 'left_hand'], 'crimson', 2.5),  # Stronger red
+            (['right_shoulder', 'right_hand'], 'forestgreen', 2.5),  # Stronger green
+            (['left_hip', 'left_foot'], 'darkviolet', 2.5),  # Stronger purple
+            (['right_hip', 'right_foot'], 'darkorange', 2.5),  # Stronger orange
+            (['left_shoulder', 'right_shoulder'], 'dimgray', 2.0),
+            (['left_hip', 'right_hip'], 'dimgray', 2.0),
+            (['spine', 'left_shoulder'], 'royalblue', 2.0),  # Brighter blue
+            (['spine', 'right_shoulder'], 'limegreen', 2.0)  # Brighter green
+        ]
+
+        # Initialize line objects with thicker lines
+        lines = []
+        for joints, color, lw in BODY_CONNECTIONS:
+            line, = ax.plot([], [], [], color=color, linewidth=lw, alpha=0.9)
+            lines.append(line)
         
-        head_point, = ax.plot([], [], [], 'ko', markersize=10)
-        
+        # Initialize smaller joint markers
+        joint_scatter = ax.scatter([], [], [], s=10, c='black', alpha=0.5, depthshade=True)
+        keypoint_scatter = ax.scatter([], [], [], s=40, c='gold', alpha=0.8, 
+                                    edgecolors='black', linewidths=0.5, depthshade=True)
+
         def animate(frame):
             sf = stick_figures[frame]
             
-            # Update body segments
-            # Torso
-            body_lines[0].set_data([sf['pelvis'][0], sf['spine'][0]], 
-                                  [sf['pelvis'][1], sf['spine'][1]])
-            body_lines[0].set_3d_properties([sf['pelvis'][2], sf['spine'][2]])
+            # Update line segments with more visible colors
+            for i, (joints, color, lw) in enumerate(BODY_CONNECTIONS):
+                x = [sf[j][0] for j in joints]
+                y = [sf[j][1] for j in joints]
+                z = [sf[j][2] for j in joints]
+                lines[i].set_data(x, y)
+                lines[i].set_3d_properties(z)
             
-            # Left arm
-            body_lines[1].set_data([sf['left_shoulder'][0], sf['left_hand'][0]], 
-                                  [sf['left_shoulder'][1], sf['left_hand'][1]])
-            body_lines[1].set_3d_properties([sf['left_shoulder'][2], sf['left_hand'][2]])
+            # Update joint positions with smaller markers
+            all_joints = np.array([sf[j] for j in [
+                'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip',
+                'left_hand', 'right_hand', 'left_foot', 'right_foot'
+            ]])
+            key_joints = np.array([sf[j] for j in ['head', 'spine', 'pelvis']])
             
-            # Right arm
-            body_lines[2].set_data([sf['right_shoulder'][0], sf['right_hand'][0]], 
-                                  [sf['right_shoulder'][1], sf['right_hand'][1]])
-            body_lines[2].set_3d_properties([sf['right_shoulder'][2], sf['right_hand'][2]])
+            if all_joints.size > 0:
+                joint_scatter._offsets3d = (all_joints[:,0], all_joints[:,1], all_joints[:,2])
+            if key_joints.size > 0:
+                keypoint_scatter._offsets3d = (key_joints[:,0], key_joints[:,1], key_joints[:,2])
             
-            # Left leg
-            body_lines[3].set_data([sf['left_hip'][0], sf['left_foot'][0]], 
-                                  [sf['left_hip'][1], sf['left_foot'][1]])
-            body_lines[3].set_3d_properties([sf['left_hip'][2], sf['left_foot'][2]])
-            
-            # Right leg
-            body_lines[4].set_data([sf['right_hip'][0], sf['right_foot'][0]], 
-                                  [sf['right_hip'][1], sf['right_foot'][1]])
-            body_lines[4].set_3d_properties([sf['right_hip'][2], sf['right_foot'][2]])
-            
-            # Head
-            head_point.set_data([sf['head'][0]], [sf['head'][1]])
-            head_point.set_3d_properties([sf['head'][2]])
-            
-            return body_lines + [head_point]
+            return lines + [joint_scatter, keypoint_scatter]
         
         # Create animation
         anim = animation.FuncAnimation(
@@ -132,8 +140,8 @@ class DanceGenerationService:
             interval=50, blit=False, repeat=True
         )
         
-        # Save GIF
-        anim.save(output_path, writer='pillow', fps=20)
+        # Save GIF with higher quality
+        anim.save(output_path, writer='pillow', fps=20, dpi=100)
         plt.close(fig)
         
         return str(output_path)
@@ -141,9 +149,7 @@ class DanceGenerationService:
     @staticmethod
     def create_dance_videos(generated_dances: List[Dict], output_dir: Path, config: Dict) -> List[str]:
         """
-        # Create video files for all generated dances
-        # Input: List of dance dictionaries with motion data
-        # Output: List of created video file paths
+        Create video files for all generated dances
         """
         video_files = []
         
