@@ -1,0 +1,42 @@
+# Bailando Training Configuration
+# Based on: "Bailando: 3D Dance Generation by Actor-Critic GPT with Choreographic Memory"
+
+# Model Parameters
+model        : 
+motion_dim   : 72               # SMPL pose dimension
+latent_dim   : 256              # VQ-VAE latent dimension
+codebook_size: 1024             # K = 1024 codes
+gpt_layers   : 12               # GPT transformer layers
+embed_dim    : 512              # Embedding dimension
+
+# Training Parameters  
+training           : 
+vq_vae_epochs      : 100          # Stage 1: VQ-VAE training
+gpt_epochs         : 50           # Stage 2: GPT training
+actor_critic_epochs: 30           # Stage 3: Actor-Critic training
+batch_size         : 16           # Training batch size
+learning_rate      : 1e-4         # Base learning rate
+save_every         : 10           # Save checkpoint every N epochs
+vq_vae_epochs      : 100          # Stage 1   : VQ-VAE training
+gpt_epochs         : 50           # Stage 2: GPT training
+actor_critic_epochs: 30           # Stage 3: Actor-Critic training
+batch_size         : 16           # Training batch size
+learning_rate      : 1e-4         # Base learning rate
+save_every         : 10           # Save checkpoint every N epochs
+
+# Data Parameters
+data           : 
+dataset_path   : "data/AIST_PLUS_PLUS"
+sequence_length: 240            # 8 seconds * 30 FPS
+train_split    : 0.8          
+val_split      : 0.2           
+
+# Output Paths
+paths      : 
+checkpoints: "outputs/checkpoints"
+logs       : "outputs/logs"
+reports    : "outputs/reports"
+videos     : "outputs/videos"
+
+# Hardware
+device: "cuda"

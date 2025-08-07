@@ -1,0 +1,36 @@
+{
+  "stage": 1,
+  "epoch": 99,
+  "loss": 774.214975638823,
+  "timestamp": "2025-08-07T10:35:44.410336",
+  "config": {
+    "model": {
+      "motion_dim": 72,
+      "latent_dim": 256,
+      "codebook_size": 1024,
+      "gpt_layers": 12,
+      "embed_dim": 512
+    },
+    "training": {
+      "vq_vae_epochs": 100,
+      "gpt_epochs": 50,
+      "actor_critic_epochs": 30,
+      "batch_size": 16,
+      "learning_rate": 0.0001,
+      "save_every": 10
+    },
+    "data": {
+      "dataset_path": "data/AIST_PLUS_PLUS",
+      "sequence_length": 240,
+      "train_split": 0.8,
+      "val_split": 0.2
+    },
+    "paths": {
+      "checkpoints": "outputs/checkpoints",
+      "logs": "outputs/logs",
+      "reports": "outputs/reports",
+      "videos": "outputs/videos"
+    },
+    "device": "cpu"
+  }
+}

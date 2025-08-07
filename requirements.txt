@@ -1,0 +1,16 @@
+# Core ML
+torch
+torchvision
+torchaudio
+numpy
+
+# Data processing
+pyyaml
+pandas
+
+# Visualization  
+matplotlib
+plotly
+
+# Video generation
+pillow
