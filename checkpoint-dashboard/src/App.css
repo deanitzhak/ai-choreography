@@ -1,0 +1,109 @@
+/* App.css - Component specific styles that complement Tailwind */
+
+.App {
+  @apply min-h-screen;
+  background: linear-gradient(135deg, theme('colors.gray.900') 0%, theme('colors.gray.800') 50%, theme('colors.gray.900') 100%);
+}
+
+/* Recharts customizations */
+.recharts-wrapper {
+  background: transparent !important;
+}
+
+.recharts-cartesian-grid line {
+  stroke: theme('colors.gray.600') !important;
+  opacity: 0.5;
+}
+
+.recharts-text {
+  fill: theme('colors.gray.400') !important;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+/* Custom checkpoint card animations */
+.checkpoint-card {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.checkpoint-card:hover {
+  @apply transform -translate-y-1;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  @apply animate-spin;
+}
+
+/* Architecture layer connections */
+.layer-connection {
+  @apply transition-all duration-300;
+}
+
+.layer-connection:hover {
+  @apply opacity-100;
+}
+
+/* Comparison chart enhancements */
+.comparison-chart .recharts-bar {
+  @apply transition-all duration-200;
+}
+
+.comparison-chart .recharts-bar:hover {
+  opacity: 0.8;
+}
+
+/* Formula styling */
+.formula-display {
+  font-family: 'Computer Modern', 'Latin Modern Math', 'STIX Two Math', serif;
+  @apply text-blue-300;
+}
+
+/* Status indicators with pulse animation */
+.status-pulse {
+  @apply animate-pulse;
+}
+
+/* Metric cards gradient backgrounds */
+.metric-card-blue {
+  background: linear-gradient(135deg, theme('colors.blue.900') 0%, theme('colors.blue.800') 100%);
+}
+
+.metric-card-green {
+  background: linear-gradient(135deg, theme('colors.green.900') 0%, theme('colors.green.800') 100%);
+}
+
+.metric-card-purple {
+  background: linear-gradient(135deg, theme('colors.purple.900') 0%, theme('colors.purple.800') 100%);
+}
+
+.metric-card-orange {
+  background: linear-gradient(135deg, theme('colors.orange.900') 0%, theme('colors.orange.800') 100%);
+}
+
+/* Interactive elements */
+.interactive-hover {
+  @apply transition-transform duration-200 ease-out;
+}
+
+.interactive-hover:hover {
+  @apply transform scale-105;
+}
+
+/* Chart container responsive adjustments */
+@media (max-width: 768px) {
+  .recharts-wrapper {
+    font-size: 12px;
+  }
+  
+  .checkpoint-card {
+    @apply p-3;
+  }
+  
+  .metric-card {
+    @apply p-3;
+  }
+}
