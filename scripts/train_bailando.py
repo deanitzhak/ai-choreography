@@ -79,8 +79,7 @@ def train_stage(model, data_loader, config, stage):
 
 def save_model_checkpoint(model, optimizer, stage, epoch, loss, config):
     """
-    # Save model checkpoint for resuming training and inference
-    # Format: {model_state_dict, optimizer_state_dict, epoch, stage, loss}
+    Save model checkpoint (overwrite previous one)
     """
     import torch
     from datetime import datetime
@@ -99,12 +98,12 @@ def save_model_checkpoint(model, optimizer, stage, epoch, loss, config):
     checkpoints_dir = Path(config['paths']['checkpoints'])
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save checkpoint
-    checkpoint_file = checkpoints_dir / f"model_stage_{stage}_epoch_{epoch+1}.pth"
+    # Always overwrite the same file
+    checkpoint_file = checkpoints_dir / "model_latest.pth"
     torch.save(checkpoint, checkpoint_file)
     
-    print(f"💾 Checkpoint saved: {checkpoint_file}")
-
+    print(f"💾 Checkpoint saved (overwritten): {checkpoint_file}")
+    
 def save_training_state(stage, epoch, loss, config):
     """
     # Save training state to JSON file for validation script
