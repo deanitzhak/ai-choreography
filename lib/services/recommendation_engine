@@ -1,0 +1,391 @@
+from typing import Dict, List
+from datetime import timedelta
+
+class RecommendationEngine:
+    """Generates intelligent recommendations for training optimization"""
+    
+    def __init__(self):
+        self.priority_levels = ["critical", "high", "medium", "low"]
+        self.action_categories = ["immediate", "configuration", "optimization", "monitoring"]
+        
+        # Stable configurations for different scenarios
+        self.stable_configs = {
+            "cpu_emergency": {
+                "model": {
+                    "latent_dim": 64,
+                    "codebook_size": 256,
+                    "gpt_layers": 4,
+                    "embed_dim": 128
+                },
+                "training": {
+                    "batch_size": 2,
+                    "learning_rate": 5e-6,
+                    "gradient_clip_norm": 0.5
+                }
+            },
+            "cpu_stable": {
+                "model": {
+                    "latent_dim": 128,
+                    "codebook_size": 512,
+                    "gpt_layers": 6,
+                    "embed_dim": 256
+                },
+                "training": {
+                    "batch_size": 4,
+                    "learning_rate": 1e-5,
+                    "gradient_clip_norm": 1.0
+                }
+            },
+            "gpu_optimized": {
+                "model": {
+                    "latent_dim": 256,
+                    "codebook_size": 1024,
+                    "gpt_layers": 12,
+                    "embed_dim": 512
+                },
+                "training": {
+                    "batch_size": 16,
+                    "learning_rate": 3e-5,
+                    "gradient_clip_norm": 1.0
+                }
+            }
+        }
+    
+    def generate_recommendations(self, analysis_results: Dict) -> Dict:
+        """Generate comprehensive recommendations based on analysis"""
+        
+        # Extract key metrics
+        performance = analysis_results.get('performance_metrics', {})
+        architecture = analysis_results.get('model_architecture', {})
+        training_data = analysis_results.get('training_progression', {})
+        config_analysis = analysis_results.get('configuration_analysis', {})
+        
+        # Generate different types of recommendations
+        immediate_actions = self._generate_immediate_actions(performance, training_data)
+        config_changes = self._generate_config_changes(architecture, performance)
+        optimization_opportunities = self._generate_optimizations(analysis_results)
+        monitoring_suggestions = self._generate_monitoring_suggestions(training_data)
+        
+        return {
+            "recommendation_metadata": {
+                "generated_at": "auto_timestamp",
+                "confidence_level": self._calculate_recommendation_confidence(analysis_results),
+                "estimated_impact": self._estimate_impact(analysis_results)
+            },
+            "immediate_actions": immediate_actions,
+            "configuration_changes": config_changes,
+            "optimization_opportunities": optimization_opportunities,
+            "monitoring_suggestions": monitoring_suggestions,
+            "implementation_plan": self._create_implementation_plan(immediate_actions, config_changes),
+            "success_metrics": self._define_success_metrics(performance, training_data)
+        }
+    
+    def _generate_immediate_actions(self, performance: Dict, training_data: Dict) -> List[Dict]:
+        """Generate critical immediate actions"""
+        actions = []
+        
+        # Critical: Training explosion
+        if performance.get('performance_status') == 'critical_unstable':
+            actions.append({
+                "priority": "critical",
+                "category": "immediate",
+                "action": "stop_training_immediately",
+                "description": "Loss explosion detected - halt training to prevent further instability",
+                "implementation": "Kill training process and backup current checkpoint",
+                "time_required": "immediate",
+                "risk_if_ignored": "complete_training_failure"
+            })
+            
+            actions.append({
+                "priority": "critical",
+                "category": "immediate", 
+                "action": "apply_emergency_configuration",
+                "description": "Switch to emergency stable configuration",
+                "implementation": f"Use config: {self.stable_configs['cpu_emergency']}",
+                "time_required": "5_minutes",
+                "expected_outcome": "stable_loss_under_100"
+            })
+        
+        # High: Gradient explosion
+        stability = training_data.get('training_stability', {})
+        if stability.get('status') in ['poor', 'critical']:
+            actions.append({
+                "priority": "high",
+                "category": "immediate",
+                "action": "add_gradient_clipping",
+                "description": "Prevent gradient explosion with gradient clipping",
+                "implementation": "Add gradient_clip_norm: 1.0 to training config",
+                "time_required": "2_minutes",
+                "success_indicator": "loss_jumps_reduce_by_80_percent"
+            })
+        
+        # High: Learning rate too aggressive
+        if training_data.get('loss_progression', {}).get('trend') == 'explosive_divergence':
+            actions.append({
+                "priority": "high",
+                "category": "immediate",
+                "action": "reduce_learning_rate",
+                "description": "Learning rate causing divergence",
+                "implementation": "Reduce learning_rate to 1e-5 or 3e-5",
+                "time_required": "1_minute",
+                "rationale": "Paper uses 3e-5, current rate likely too aggressive"
+            })
+        
+        return actions
+    
+    def _generate_config_changes(self, architecture: Dict, performance: Dict) -> Dict:
+        """Generate configuration change recommendations"""
+        changes = {
+            "model_architecture": {},
+            "training_parameters": {},
+            "data_processing": {},
+            "hardware_optimization": {}
+        }
+        
+        # Model architecture changes
+        if not architecture.get('hardware_suitability', {}).get('cpu_training_suitable', True):
+            changes["model_architecture"] = {
+                "rationale": "Model too complex for CPU training",
+                "changes": self.stable_configs["cpu_stable"]["model"],
+                "expected_reduction": "75% parameter reduction",
+                "performance_impact": "minimal_for_proof_of_concept"
+            }
+        
+        # Training parameters
+        if performance.get('performance_status') in ['critical_unstable', 'unstable']:
+            changes["training_parameters"] = {
+                "rationale": "Training instability requires conservative parameters",
+                "changes": self.stable_configs["cpu_stable"]["training"],
+                "additional_changes": {
+                    "sequence_length": 120,  # Reduced from 240
+                    "save_every": 5  # More frequent saves
+                },
+                "monitoring_frequency": "every_epoch"
+            }
+        
+        # Hardware optimization
+        device = architecture.get('hardware_suitability', {}).get('current_device', 'unknown')
+        if device == 'cpu':
+            changes["hardware_optimization"] = {
+                "rationale": "Optimize for CPU constraints",
+                "changes": {
+                    "use_cpu_optimized_batch_size": 4,
+                    "enable_mixed_precision": False,  # CPU doesn't support efficiently
+                    "optimize_memory_usage": True
+                },
+                "alternative_suggestion": "consider_gpu_if_available"
+            }
+        
+        return changes
+    
+    def _generate_optimizations(self, analysis_results: Dict) -> List[Dict]:
+        """Generate optimization opportunities"""
+        optimizations = []
+        
+        architecture = analysis_results.get('model_architecture', {})
+        performance = analysis_results.get('performance_metrics', {})
+        
+        # Model compression opportunities
+        if architecture.get('optimization_potential', {}).get('optimization_score', 0) > 0.5:
+            optimizations.append({
+                "type": "model_compression",
+                "description": "Significant model reduction possible without quality loss",
+                "techniques": ["dimension_reduction", "layer_pruning", "codebook_optimization"],
+                "expected_speedup": "2-4x training speed",
+                "implementation_effort": "medium",
+                "risk_level": "low"
+            })
+        
+        # Training efficiency
+        if performance.get('training_efficiency', 0) < 0.1:
+            optimizations.append({
+                "type": "training_efficiency",
+                "description": "Training efficiency can be improved",
+                "techniques": ["learning_rate_scheduling", "early_stopping", "curriculum_learning"],
+                "expected_improvement": "30-50% faster convergence",
+                "implementation_effort": "low",
+                "priority": "medium"
+            })
+        
+        # Data pipeline optimization
+        optimizations.append({
+            "type": "data_pipeline",
+            "description": "Optimize data loading and preprocessing",
+            "techniques": ["data_caching", "parallel_loading", "sequence_batching"],
+            "expected_improvement": "20-30% faster training",
+            "implementation_effort": "low",
+            "immediate_benefits": True
+        })
+        
+        return optimizations
+    
+    def _generate_monitoring_suggestions(self, training_data: Dict) -> Dict:
+        """Generate monitoring and alerting suggestions"""
+        return {
+            "critical_metrics": {
+                "loss_threshold": {
+                    "metric": "training_loss",
+                    "alert_threshold": 200,
+                    "action": "pause_training_and_investigate",
+                    "frequency": "every_epoch"
+                },
+                "gradient_norm": {
+                    "metric": "gradient_norm",
+                    "alert_threshold": 10,
+                    "action": "enable_gradient_clipping",
+                    "frequency": "every_batch"
+                }
+            },
+            
+            "performance_tracking": {
+                "convergence_rate": {
+                    "metric": "loss_improvement_per_epoch",
+                    "target": "> 0.1",
+                    "evaluation_window": "10_epochs"
+                },
+                "stability_score": {
+                    "metric": "loss_coefficient_of_variation",
+                    "target": "< 0.5",
+                    "evaluation_window": "20_epochs"
+                }
+            },
+            
+            "automated_actions": {
+                "learning_rate_reduction": {
+                    "trigger": "no_improvement_for_10_epochs",
+                    "action": "reduce_lr_by_50_percent",
+                    "max_reductions": 3
+                },
+                "checkpoint_validation": {
+                    "trigger": "every_10_epochs",
+                    "action": "generate_sample_dances",
+                    "purpose": "visual_quality_check"
+                }
+            }
+        }
+    
+    def _create_implementation_plan(self, immediate_actions: List[Dict], config_changes: Dict) -> Dict:
+        """Create step-by-step implementation plan"""
+        plan = {
+            "phase_1_emergency": {
+                "duration": "immediate_to_30_minutes",
+                "actions": [action for action in immediate_actions if action['priority'] == 'critical'],
+                "success_criteria": "training_loss_stabilizes_under_200"
+            },
+            
+            "phase_2_optimization": {
+                "duration": "30_minutes_to_2_hours", 
+                "actions": [
+                    "Apply stable configuration",
+                    "Test training for 10 epochs",
+                    "Monitor stability metrics"
+                ],
+                "success_criteria": "stable_loss_progression_for_10_epochs"
+            },
+            
+            "phase_3_continuation": {
+                "duration": "2_hours_to_completion",
+                "actions": [
+                    "Continue VQ-VAE training",
+                    "Begin GPT stage when ready",
+                    "Monitor convergence metrics"
+                ],
+                "success_criteria": "complete_3_stage_training_pipeline"
+            }
+        }
+        
+        return plan
+    
+    def _define_success_metrics(self, performance: Dict, training_data: Dict) -> Dict:
+        """Define clear success metrics for recommendations"""
+        current_loss = performance.get('current_loss', float('inf'))
+        
+        return {
+            "short_term_targets": {
+                "loss_stabilization": {
+                    "target": "< 100",
+                    "current": current_loss,
+                    "timeline": "within_20_epochs"
+                },
+                "training_stability": {
+                    "target": "coefficient_of_variation < 0.5",
+                    "current": training_data.get('training_stability', {}).get('coefficient_variation', 'unknown'),
+                    "timeline": "within_10_epochs"
+                }
+            },
+            
+            "medium_term_targets": {
+                "vq_vae_convergence": {
+                    "target": "< 30",
+                    "paper_reference": "CVPR_2022_Bailando",
+                    "timeline": "within_50_epochs"
+                },
+                "generation_quality": {
+                    "target": "visually_plausible_motion",
+                    "evaluation": "qualitative_assessment",
+                    "timeline": "end_of_stage_1"
+                }
+            },
+            
+            "long_term_targets": {
+                "complete_pipeline": {
+                    "target": "all_3_stages_completed",
+                    "timeline": "within_1_week",
+                    "success_indicator": "generates_synchronized_dances"
+                },
+                "paper_reproduction": {
+                    "target": "similar_quality_to_paper_results",
+                    "metrics": ["beat_alignment_score", "motion_diversity"],
+                    "timeline": "project_completion"
+                }
+            }
+        }
+    
+    def _calculate_recommendation_confidence(self, analysis_results: Dict) -> float:
+        """Calculate confidence in recommendations"""
+        confidence_factors = []
+        
+        # Data quality factor
+        training_epochs = analysis_results.get('training_progression', {}).get('total_epochs', 0)
+        if training_epochs > 20:
+            confidence_factors.append(0.4)
+        elif training_epochs > 10:
+            confidence_factors.append(0.3)
+        else:
+            confidence_factors.append(0.1)
+        
+        # Analysis completeness
+        if 'model_architecture' in analysis_results and 'error' not in analysis_results['model_architecture']:
+            confidence_factors.append(0.3)
+        else:
+            confidence_factors.append(0.1)
+        
+        # Clear problem identification
+        performance_status = analysis_results.get('performance_metrics', {}).get('performance_status', 'unknown')
+        if performance_status in ['critical_unstable', 'stable']:
+            confidence_factors.append(0.3)  # Clear diagnosis
+        else:
+            confidence_factors.append(0.2)
+        
+        return round(sum(confidence_factors), 2)
+    
+    def _estimate_impact(self, analysis_results: Dict) -> Dict:
+        """Estimate impact of implementing recommendations"""
+        current_health = analysis_results.get('performance_metrics', {}).get('health_score', 0.5)
+        
+        if current_health < 0.3:
+            potential_improvement = 0.6  # High improvement potential
+            time_to_improve = "1-2_days"
+        elif current_health < 0.6:
+            potential_improvement = 0.3
+            time_to_improve = "6-12_hours"
+        else:
+            potential_improvement = 0.1
+            time_to_improve = "2-4_hours"
+        
+        return {
+            "expected_health_improvement": potential_improvement,
+            "time_to_see_results": time_to_improve,
+            "probability_of_success": min(0.95, current_health + potential_improvement),
+            "risk_assessment": "low" if current_health > 0.5 else "medium"
+        }

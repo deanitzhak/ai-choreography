@@ -1,0 +1,8 @@
+{
+  "stage": 2,
+  "epoch": 9,
+  "loss": 0.11529500578485784,
+  "timestamp": "2025-08-09T07:22:44.645868",
+  "config_path": "unknown",
+  "device": "cpu"
+}

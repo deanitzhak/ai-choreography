@@ -9,55 +9,54 @@ import yaml
 import argparse
 from pathlib import Path
 
-class ConfigService: 
-    """
-    # Service for loading and managing configuration parameters
-    # Input: YAML file path → Output: Dictionary of parameters
-    """
+class ConfigService:
+    """Service for configuration management"""
     
     @staticmethod
-    def load_config(config_path: str) -> dict: 
-        """
-        # Load configuration from YAML file
-        # Formula: Config = YAML.parse(file_path)
-        """
-        config_path = Path(config_path)
-        if not config_path.exists(): 
-            raise FileNotFoundError(f"Config file not found: {config_path}")
-            
-        with open(config_path, 'r') as f: 
-            config = yaml.safe_load(f)
+    def load_config(config_path: str) -> dict:
+        """Load YAML configuration file"""
+        try:
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            return config
+        except Exception as e:
+            print(f"Error loading config {config_path}: {e}")
+            # Return basic fallback config
+            return {
+                'model': {
+                    'motion_dim': 72,
+                    'latent_dim': 256,
+                    'codebook_size': 1024,
+                    'gpt_layers': 12,
+                    'embed_dim': 512
+                },
+                'training': {
+                    'learning_rate': 1e-4,
+                    'batch_size': 16
+                },
+                'device': 'cpu',
+                'paths': {
+                    'logs': 'outputs/logs',
+                    'checkpoints': 'outputs/checkpoints'
+                }
+            }
         
-        return config
-    
     @staticmethod
-    def parse_training_args() -> argparse.Namespace: 
-        """
-        # Parse command line arguments for training
-        # Returns: Parsed arguments namespace
-        """
-        parser = argparse.ArgumentParser(description="Bailando Training")
-        parser.add_argument('--config', type=str, default='config/bailando_config.yaml',
-                           help='Configuration file path')
-        parser.add_argument('--resume', type=str, default=None,
-                           help='Resume from checkpoint')
-        parser.add_argument('--stage', type=int, choices=[1,2,3], default=1,
-                           help='Training stage (1=VQ-VAE, 2=GPT, 3=Actor-Critic)')
-        
-        return parser.parse_args()
-    
+    def parse_training_args():
+        """Parse training script arguments"""
+        parser = argparse.ArgumentParser(description="Enhanced Bailando Training")
+        parser.add_argument('--config', type=str, required=True, help='Config file path')
+        parser.add_argument('--stage', type=int, default=1, help='Training stage (1, 2, or 3)')
+        parser.add_argument('--resume', type=str, help='Resume mode: "latest", "select", or specific checkpoint path')
+        parser.add_argument('--run-name', type=str, help='Custom name for this training run')
+        parser.add_argument('--preserve-logs', action='store_true', help='Use timestamped log directory')
+        return parser.parse_args()  
+  
     @staticmethod
-    def parse_validation_args() -> argparse.Namespace: 
-        """
-        # Parse command line arguments for validation
-        # Returns: Parsed arguments namespace
-        """
-        parser = argparse.ArgumentParser(description="Bailando Validation")
-        parser.add_argument('--config', type=str, required=True,
-                           help='Configuration file path')
-        parser.add_argument('--checkpoint', type=str, required=True,
-                           help='Model checkpoint path')
-        parser.add_argument('--output', type=str, default='outputs/reports',
-                           help='Output directory for reports')
-        
+    def parse_validation_args():
+        """Parse validation script arguments"""
+        parser = argparse.ArgumentParser(description="Validate Bailando model")
+        parser.add_argument('--config', type=str, required=True, help='Config file path')
+        parser.add_argument('--checkpoint', type=str, required=True, help='Checkpoint file path')
+        parser.add_argument('--output', type=str, default='outputs/reports', help='Output directory')
         return parser.parse_args()

@@ -1,0 +1,339 @@
+# 🎭 BAILANDO: COMPLETE COMMANDS REFERENCE
+# ===============================================
+# All supported commands for Bailando AI Choreography System
+# Implementation of "Bailando: 3D Dance Generation by Actor-Critic GPT with Choreographic Memory" (CVPR 2022)
+# ===============================================
+
+# ===============================================
+# 🚀 CORE TRAINING COMMANDS
+# ===============================================
+
+# Fresh Start Training (Recommended)
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 1
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 2
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 3
+
+# Resume from Latest Checkpoint (Auto-detects)
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume latest --stage 1
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume latest --stage 2
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume latest --stage 3
+
+# Resume from Specific Checkpoint
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume outputs/checkpoints/model_stage_1_epoch_99.pth --stage 1
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume outputs/checkpoints_stable/model_stage_1_latest.pth --stage 1
+
+# Training with Different Configurations
+python scripts/train_bailando.py --config config/bailando_config_gpu.yaml --stage 1
+python scripts/train_bailando.py --config config/bailando_config_emergency.yaml --stage 1
+python scripts/train_bailando.py --config config/bailando_config.yaml --stage 1
+
+# ===============================================
+# 🔍 ANALYSIS & MONITORING COMMANDS
+# ===============================================
+
+# Checkpoint Analysis with Detailed Conclusions
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints/model_stage_1_epoch_99.pth --config config/bailando_config.yaml --output outputs/conclusions
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --config config/bailando_config_stable.yaml --logs outputs/logs_stable --output outputs/conclusions
+
+# Quick Analysis (Terminal Output)
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --config config/bailando_config_stable.yaml
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints/model_stage_1_epoch_49.pth --config config/bailando_config.yaml | jq '.executive_summary'
+
+# Emergency Analysis Mode
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints/latest.pth --emergency_mode
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints/model_stage_1_epoch_49.pth --config config/bailando_config.yaml --emergency_mode
+
+# ===============================================
+# 📊 VALIDATION & REPORTING COMMANDS
+# ===============================================
+
+# Generate Validation Reports
+python scripts/validate_model.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --output outputs/reports_stable
+python scripts/validate_model.py --config config/bailando_config.yaml --checkpoint outputs/checkpoints/model_stage_1_epoch_99.pth --output outputs/reports
+
+# Compare Multiple Checkpoints
+python scripts/compare_checkpoints.py --checkpoints outputs/checkpoints/model_stage_1_epoch_*.pth --config config/bailando_config.yaml --output outputs/comparisons
+python scripts/compare_checkpoints.py --checkpoints outputs/checkpoints_stable/model_stage_1_*.pth --config config/bailando_config_stable.yaml --output outputs/comparisons_stable
+
+# ===============================================
+# 🎨 DANCE GENERATION COMMANDS
+# ===============================================
+
+# Basic Dance Generation
+python scripts/generate_dance.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --num_dances 5 --output outputs/videos_stable
+python scripts/generate_dance.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints/model_stage_3_latest.pth --num_dances 3 --output outputs/videos
+
+# Advanced Generation with Style Control
+python scripts/generate_dance.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints/model_stage_3_latest.pth --num_dances 10 --styles "energetic,smooth,breakdance" --duration 30 --output outputs/videos_styled
+python scripts/generate_dance.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_2_latest.pth --num_dances 8 --styles "classical,modern" --output outputs/videos_classical
+
+# Generate with Specific Music
+python scripts/generate_dance.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints/model_stage_3_latest.pth --music_file data/music/sample.wav --output outputs/videos_custom
+
+# ===============================================
+# ⚡ NEURAL NETWORK OPTIMIZER COMMANDS
+# ===============================================
+
+# Hardware-Specific Optimization
+python scripts/optimize_model.py --config config/bailando_config.yaml --target_device cpu --max_parameters 15M --output config/bailando_config_optimized.yaml
+python scripts/optimize_model.py --config config/bailando_config.yaml --target_device gpu --max_parameters 50M --output config/bailando_config_gpu_optimized.yaml
+python scripts/optimize_model.py --config config/bailando_config.yaml --target_device cpu --memory_limit 4GB --speed_priority --output config/bailando_config_fast.yaml
+
+# Component-Level Optimization
+python scripts/optimize_model.py --checkpoint outputs/checkpoints/model_stage_1_epoch_99.pth --optimize_components vq_vae,gpt --compression_ratio 0.5 --output outputs/optimized_model.pth
+python scripts/optimize_model.py --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --optimize_components vq_vae --compression_ratio 0.3 --output outputs/vq_vae_optimized.pth
+
+# Model Compression
+python scripts/optimize_model.py --checkpoint outputs/checkpoints/model_stage_2_latest.pth --compression_ratio 0.7 --quantization int8 --output outputs/compressed_model.pth
+
+# ===============================================
+# 🔧 CONFIGURATION MANAGEMENT COMMANDS
+# ===============================================
+
+# Create Hardware-Specific Config
+python scripts/create_config.py --device cpu --ram_gb 8 --target_speed fast --output config/bailando_config_my_hardware.yaml
+python scripts/create_config.py --device gpu --ram_gb 16 --target_speed balanced --output config/bailando_config_gpu_custom.yaml
+python scripts/create_config.py --device cpu --ram_gb 4 --target_speed memory_efficient --output config/bailando_config_low_memory.yaml
+
+# Validate Configuration
+python scripts/validate_config.py --config config/bailando_config_stable.yaml --check_hardware_compatibility --estimate_training_time
+python scripts/validate_config.py --config config/bailando_config_gpu.yaml --check_hardware_compatibility
+python scripts/validate_config.py --config config/bailando_config_emergency.yaml --quick_check
+
+# Compare Configurations
+python scripts/compare_configs.py --configs config/bailando_config.yaml config/bailando_config_stable.yaml --output config/config_comparison.json
+python scripts/compare_configs.py --configs config/bailando_config_stable.yaml config/bailando_config_gpu.yaml config/bailando_config_emergency.yaml --output config/all_configs_comparison.json
+
+# ===============================================
+# 📊 DASHBOARD & MONITORING COMMANDS
+# ===============================================
+
+# Start Interactive Dashboard
+cd frontend && npm install && npm run dev  # http://localhost:3000
+python Server.py  # http://localhost:8000
+
+# Real-Time Training Monitor
+python scripts/monitor_training.py --logs_dir outputs/logs_stable --alert_threshold 200 --email_alerts
+python scripts/monitor_training.py --logs_dir outputs/logs --alert_threshold 500 --webhook_url https://your-webhook.com
+
+# Training Status Monitoring
+tail -f outputs/logs_stable/training_state_stage_1_epoch_*.json | jq '.loss'
+tail -f outputs/logs/training_state_*.json | jq '{epoch: .epoch, loss: .loss, stage: .stage}'
+
+# Real-Time Loss Monitoring Script
+python -c "
+import time, json
+from pathlib import Path
+while True:
+    logs = list(Path('outputs/logs_stable').glob('*.json'))
+    if logs:
+        latest = max(logs, key=lambda p: p.stat().st_mtime)
+        with open(latest) as f:
+            data = json.load(f)
+        print(f'Epoch {data[\"epoch\"]}, Loss: {data[\"loss\"]:.2f}, LR: {data.get(\"learning_rate\", \"N/A\")}')
+    time.sleep(30)
+"
+
+# ===============================================
+# 🔍 DATASET & DATA COMMANDS
+# ===============================================
+
+# Verify Dataset Integrity
+python -c "
+from lib.data_preparation.dataset_builder import BailandoDataset
+from lib.services.config_service import ConfigService
+config = ConfigService.load_config('config/bailando_config_stable.yaml')
+dataset = BailandoDataset(config['data']['dataset_path'], config)
+print(f'✅ Dataset OK: {len(dataset)} sequences')
+print(f'📁 Dataset path: {config[\"data\"][\"dataset_path\"]}')
+"
+
+# Dataset Statistics
+python scripts/analyze_dataset.py --dataset_path data/AIST_PLUS_PLUS --output outputs/dataset_analysis.json
+python scripts/visualize_dataset.py --dataset_path data/AIST_PLUS_PLUS --num_samples 10 --output outputs/dataset_visualization
+
+# ===============================================
+# 🧹 MAINTENANCE & CLEANUP COMMANDS
+# ===============================================
+
+# Archive Completed Training Run
+mkdir -p archives/$(date +%Y%m%d_%H%M%S)
+mv outputs/checkpoints_stable archives/$(date +%Y%m%d_%H%M%S)/
+mv outputs/logs_stable archives/$(date +%Y%m%d_%H%M%S)/
+mv outputs/reports_stable archives/$(date +%Y%m%d_%H%M%S)/
+
+# Clean Old Outputs (CAREFUL - DESTRUCTIVE!)
+# rm -rf outputs/checkpoints/*
+# rm -rf outputs/logs/*
+# rm -rf outputs/reports/*
+# rm -rf outputs/videos/*
+
+# List Current Checkpoints
+ls -la outputs/checkpoints*/
+ls -la outputs/checkpoints_stable/
+find outputs/ -name "*.pth" -type f -exec ls -lh {} \;
+
+# Disk Space Check
+du -sh outputs/
+du -sh data/
+df -h
+
+# ===============================================
+# 🚨 EMERGENCY & RECOVERY COMMANDS
+# ===============================================
+
+# Stop All Training Processes
+pkill -f train_bailando.py
+pkill -f python.*train_bailando
+
+# Emergency Recovery Training
+python scripts/train_bailando.py --config config/bailando_config_emergency.yaml --stage 1
+python scripts/train_bailando.py --config config/bailando_config_emergency.yaml --resume latest --stage 1
+
+# Emergency Analysis
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints/latest.pth --emergency_mode --output outputs/emergency_analysis
+python scripts/diagnose_training.py --logs_dir outputs/logs --emergency_mode
+
+# Recovery from Loss Explosion
+python scripts/recover_from_explosion.py --checkpoint outputs/checkpoints/model_stage_1_epoch_49.pth --config config/bailando_config_stable.yaml --output outputs/recovery
+
+# ===============================================
+# 🔧 ADVANCED OPTIMIZATION COMMANDS
+# ===============================================
+
+# Auto-Tune Hyperparameters
+python scripts/auto_tune.py --config config/bailando_config_stable.yaml --target_loss 50 --max_trials 10 --output config/bailando_config_tuned.yaml
+python scripts/auto_tune.py --config config/bailando_config.yaml --target_metric beat_alignment --target_value 0.25 --max_trials 20
+
+# Progressive Training
+python scripts/progressive_training.py --start_config config/bailando_config_small.yaml --end_config config/bailando_config_stable.yaml --growth_schedule linear --stages 3
+python scripts/progressive_training.py --start_config config/bailando_config_emergency.yaml --end_config config/bailando_config_gpu.yaml --growth_schedule exponential
+
+# Hyperparameter Search
+python scripts/hyperparameter_search.py --base_config config/bailando_config_stable.yaml --search_space configs/search_space.yaml --trials 50 --output config/best_config.yaml
+
+# ===============================================
+# 📈 PERFORMANCE ANALYSIS COMMANDS
+# ===============================================
+
+# Benchmark Model Performance
+python scripts/benchmark_model.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --output outputs/benchmarks
+python scripts/profile_training.py --config config/bailando_config_stable.yaml --profile_epochs 5 --output outputs/training_profile
+
+# Memory Usage Analysis
+python scripts/analyze_memory.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth
+python scripts/memory_profiler.py --training_run outputs/logs_stable --output outputs/memory_analysis
+
+# Speed Optimization
+python scripts/optimize_speed.py --config config/bailando_config_stable.yaml --target_fps 30 --output config/bailando_config_fast_inference.yaml
+
+# ===============================================
+# 📱 QUICK COPY-PASTE COMMANDS (MOST COMMON)
+# ===============================================
+
+# Complete Fresh Start Workflow
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 1
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --config config/bailando_config_stable.yaml
+python scripts/generate_dance.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --num_dances 3
+
+# Resume Latest Workflow
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume latest --stage 1
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth --config config/bailando_config_stable.yaml
+
+# Emergency Recovery Workflow
+pkill -f train_bailando.py
+python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints/latest.pth --emergency_mode
+python scripts/train_bailando.py --config config/bailando_config_emergency.yaml --stage 1
+
+# Dashboard Start Workflow
+cd frontend && npm run dev &  # Background
+python Server.py &            # Background
+python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 1
+
+# ===============================================
+# 🎯 AVAILABLE CONFIGURATIONS
+# ===============================================
+
+# config/bailando_config_stable.yaml      - CPU-optimized stable config (RECOMMENDED)
+# config/bailando_config_emergency.yaml   - Emergency recovery config (minimal resources)
+# config/bailando_config_gpu.yaml         - GPU-optimized config (high performance)
+# config/bailando_config.yaml             - Original configuration (paper reproduction)
+
+# ===============================================
+# 📋 TROUBLESHOOTING COMMANDS
+# ===============================================
+
+# Check System Requirements
+python scripts/check_requirements.py --config config/bailando_config_stable.yaml
+python scripts/system_info.py --detailed
+
+# Validate Installation
+python scripts/validate_installation.py --run_tests --check_dependencies
+python -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
+
+# Debug Training Issues
+python scripts/debug_training.py --config config/bailando_config_stable.yaml --checkpoint outputs/checkpoints_stable/model_stage_1_latest.pth
+python scripts/trace_gradients.py --config config/bailando_config_stable.yaml --num_steps 10
+
+# ===============================================
+# 💡 TIPS & BEST PRACTICES
+# ===============================================
+
+# Tip 1: Always use stable config for CPU training
+# config/bailando_config_stable.yaml has been optimized for your hardware
+
+# Tip 2: Monitor loss - if it goes above 200, stop training immediately
+# Loss should stay below 100 for stable training
+
+# Tip 3: Generate conclusions regularly to track progress
+# python scripts/analyze_checkpoint.py provides detailed insights
+
+# Tip 4: Use the dashboard for visual monitoring
+# Frontend at localhost:3000 shows real-time training curves
+
+# Tip 5: Save checkpoints frequently during experimentation
+# Set save_every: 5 in config for more frequent saves
+
+# ===============================================
+# 🔥 TROUBLESHOOTING SCENARIOS
+# ===============================================
+
+# Loss Explosion (Loss > 500):
+# 1. pkill -f train_bailando
+# 2. python scripts/analyze_checkpoint.py --checkpoint latest.pth --emergency_mode
+# 3. python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 1
+
+# Out of Memory:
+# 1. Reduce batch_size to 2 in config
+# 2. Reduce sequence_length to 60
+# 3. Use emergency config: config/bailando_config_emergency.yaml
+
+# Slow Training:
+# 1. Increase batch_size (if memory allows)
+# 2. Use smaller model: reduce latent_dim, gpt_layers
+# 3. Enable data caching in config
+
+# Model Not Learning:
+# 1. Check learning rate (should be 1e-5 for stable training)
+# 2. Verify dataset loading: check data/AIST_PLUS_PLUS structure
+# 3. Analyze gradients: python scripts/trace_gradients.py
+
+# ===============================================
+# 📞 SUPPORT & DEBUGGING
+# ===============================================
+
+# Check Logs for Errors
+tail -f outputs/logs_stable/training_*.log
+grep -i error outputs/logs_stable/*.log
+
+# Generate Debug Report
+python scripts/generate_debug_report.py --config config/bailando_config_stable.yaml --output outputs/debug_report.html
+
+# Test Individual Components
+python scripts/test_vq_vae.py --config config/bailando_config_stable.yaml
+python scripts/test_gpt.py --config config/bailando_config_stable.yaml
+python scripts/test_actor_critic.py --config config/bailando_config_stable.yaml
+
+# ===============================================
+# END OF COMMANDS REFERENCE
+# ===============================================

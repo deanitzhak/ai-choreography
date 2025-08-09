@@ -1,0 +1,253 @@
+{
+  "analysis_metadata": {
+    "generated_at": "2025-08-08T21:29:32.517589",
+    "analyzer_version": "1.0.0",
+    "checkpoint_analyzed": "outputs/checkpoints/model_stage_1_latest.pth",
+    "config_used": "config/bailando_config_stable.yaml"
+  },
+  "executive_summary": {
+    "overall_status": "unstable",
+    "health_score": 0.4,
+    "training_stage": 1,
+    "current_epoch": 99,
+    "main_issue": "training_instability",
+    "confidence_level": 0.8
+  },
+  "detailed_analysis": {
+    "checkpoint_metadata": {
+      "path": "outputs/checkpoints/model_stage_1_latest.pth",
+      "epoch": 99,
+      "stage": 1,
+      "loss": 294.3072587522593,
+      "timestamp": "2025-08-08T17:46:27.521663",
+      "file_size_mb": 205.41,
+      "contains_optimizer": true,
+      "contains_config": true
+    },
+    "training_progression": {
+      "status": "analysis_complete",
+      "total_epochs": 20,
+      "loss_progression": {
+        "status": "analyzed",
+        "statistics": {
+          "initial_loss": 48.46469483050433,
+          "final_loss": 774.214975638823,
+          "min_loss": 48.46469483050433,
+          "max_loss": 958.594953937964,
+          "mean_loss": 420.3604256980799,
+          "loss_volatility": 259.27067666358334
+        },
+        "trend": "strong_increasing",
+        "explosion_detected": true,
+        "explosion_epochs": [
+          29,
+          39,
+          49,
+          59,
+          69,
+          79,
+          89,
+          99
+        ],
+        "jump_analysis": {
+          "total_jumps": 9,
+          "major_jumps": [
+            {
+              "epoch": 9,
+              "from_loss": 48.46469483050433,
+              "to_loss": 127.17348166487433,
+              "ratio": 2.6240437933146676,
+              "absolute_change": 78.70878683437,
+              "severity": "major"
+            },
+            {
+              "epoch": 19,
+              "from_loss": 127.17348166487433,
+              "to_loss": 493.74486379189926,
+              "ratio": 3.882451414619664,
+              "absolute_change": 366.57138212702495,
+              "severity": "major"
+            },
+            {
+              "epoch": 29,
+              "from_loss": 183.94769310409373,
+              "to_loss": 590.3804670030421,
+              "ratio": 3.2095018808904174,
+              "absolute_change": 406.43277389894837,
+              "severity": "major"
+            },
+            {
+              "epoch": 39,
+              "from_loss": 155.02835024486888,
+              "to_loss": 700.4270208748904,
+              "ratio": 4.518057631191707,
+              "absolute_change": 545.3986706300216,
+              "severity": "major"
+            },
+            {
+              "epoch": 49,
+              "from_loss": 220.2181138396263,
+              "to_loss": 958.594953937964,
+              "ratio": 4.35293417614166,
+              "absolute_change": 738.3768400983377,
+              "severity": "major"
+            },
+            {
+              "epoch": 59,
+              "from_loss": 252.1007206412879,
+              "to_loss": 559.878479773348,
+              "ratio": 2.2208523575384564,
+              "absolute_change": 307.77775913206005,
+              "severity": "major"
+            },
+            {
+              "epoch": 69,
+              "from_loss": 246.66549349914897,
+              "to_loss": 627.5321244976737,
+              "ratio": 2.5440612531393203,
+              "absolute_change": 380.8666309985248,
+              "severity": "major"
+            },
+            {
+              "epoch": 79,
+              "from_loss": 219.1645831492814,
+              "to_loss": 804.9340061491185,
+              "ratio": 3.672737604692484,
+              "absolute_change": 585.7694229998372,
+              "severity": "major"
+            },
+            {
+              "epoch": 99,
+              "from_loss": 294.3072587522593,
+              "to_loss": 774.214975638823,
+              "ratio": 2.6306350000376253,
+              "absolute_change": 479.9077168865637,
+              "severity": "major"
+            }
+          ],
+          "jump_frequency": 0.45,
+          "largest_jump": {
+            "epoch": 39,
+            "from_loss": 155.02835024486888,
+            "to_loss": 700.4270208748904,
+            "ratio": 4.518057631191707,
+            "absolute_change": 545.3986706300216,
+            "severity": "major"
+          }
+        },
+        "paper_comparison": {
+          "vq_vae_stage": {
+            "target": 30,
+            "current": 774.214975638823,
+            "best_achieved": 48.46469483050433,
+            "distance_to_target": 744.214975638823,
+            "on_track": false
+          },
+          "stability_assessment": "unstable",
+          "paper_alignment": "good"
+        }
+      },
+      "training_stability": {
+        "score": 0,
+        "status": "critical",
+        "coefficient_variation": 0.617,
+        "jump_frequency": 0.45,
+        "explosion_rate": 0.4,
+        "total_explosions": 8,
+        "recommendation": "restart_with_stable_configuration"
+      },
+      "convergence_analysis": {
+        "status": "diverging",
+        "improvement_rate": -21.4336,
+        "recent_variance": 50065.201,
+        "estimated_epochs_to_convergence": null,
+        "convergence_confidence": 0.24
+      },
+      "stage_breakdown": {
+        "stage_1": {
+          "epochs_completed": 20,
+          "loss_progression": {
+            "initial": 48.46469483050433,
+            "final": 774.214975638823,
+            "best": 48.46469483050433,
+            "worst": 958.594953937964
+          },
+          "improvement": -725.7502808083187,
+          "stability": "unstable",
+          "completion_status": "in_progress"
+        }
+      }
+    },
+    "model_architecture": {
+      "total_parameters": 39657728,
+      "vq_vae_parameters": 729088,
+      "gpt_parameters": 38797312,
+      "critic_parameters": 131328,
+      "cpu_training_suitable": false,
+      "hardware_suitability": {
+        "cpu_training_suitable": false,
+        "current_device": "cpu",
+        "estimated_memory_gb": 0.634523648
+      },
+      "optimization_potential": {
+        "optimization_score": 0.7
+      }
+    },
+    "configuration_analysis": {
+      "differences_from_paper": {
+        "learning_rate": {
+          "paper": 3e-05,
+          "current": 0.0001,
+          "ratio": 3.3333333333333335
+        },
+        "batch_size": {
+          "paper": 16,
+          "current": 8,
+          "ratio": 0.5
+        }
+      },
+      "paper_alignment_score": 0.6666666666666667
+    },
+    "performance_metrics": {
+      "current_loss": 294.3072587522593,
+      "performance_status": "unstable",
+      "health_score": 0.4,
+      "training_efficiency": 0,
+      "total_improvement": -245.8426,
+      "epochs_trained": 20,
+      "convergence_indicator": "strong_increasing"
+    }
+  },
+  "recommendations": {
+    "immediate_actions": [],
+    "optimization_opportunities": [
+      {
+        "type": "model_compression",
+        "description": "Model too large for CPU training",
+        "expected_improvement": "Enable stable training on current hardware"
+      }
+    ],
+    "configuration_changes": {
+      "recommended_lr": null,
+      "recommended_batch_size": 4
+    }
+  },
+  "next_actions": {
+    "immediate_priority": "unknown",
+    "can_continue_training": false,
+    "recommended_action": "analyze_further",
+    "time_estimate": "unknown"
+  },
+  "actionable_insights": {
+    "critical_issues": [],
+    "optimization_opportunities": [
+      {
+        "type": "model_compression",
+        "description": "Model too large for CPU training",
+        "expected_improvement": "Enable stable training on current hardware"
+      }
+    ],
+    "success_probability": 0.12,
+    "estimated_completion_time": "depends_on_optimization_success"
+  }
+}

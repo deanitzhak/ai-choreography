@@ -1,28 +1,32 @@
-model:
-  motion_dim: 72
-  latent_dim: 256
-  codebook_size: 1024
-  gpt_layers: 12
-  embed_dim: 512
+# 2. CREATE: config/bailando_config_stable.yaml
+# Stable CPU configuration to fix loss explosion
 
-training:
-  vq_vae_epochs: 100
-  gpt_epochs: 50
-  actor_critic_epochs: 30
-  batch_size: 16
-  learning_rate: 0.0001
-  save_every: 10
+model        : 
+motion_dim   : 72
+latent_dim   : 128          # Reduced from 256
+codebook_size: 512       # Reduced from 1024
+gpt_layers   : 6            # Reduced from 12
+embed_dim    : 256           # Reduced from 512
 
-data:
-  dataset_path: "data/AIST_PLUS_PLUS"
-  sequence_length: 240
-  train_split: 0.8
-  val_split: 0.2
+training           : 
+vq_vae_epochs      : 50        # Reduced for faster iteration
+gpt_epochs         : 25
+actor_critic_epochs: 15
+batch_size         : 4            # Reduced from 16 for CPU
+learning_rate      : 0.00001   # 10x smaller than current (critical!)
+gradient_clip_norm : 1.0  # NEW: Prevent gradient explosion
+save_every         : 5            # More frequent saves
 
-paths:
-  checkpoints: "outputs/checkpoints"
-  logs: "outputs/logs"
-  reports: "outputs/reports"
-  videos: "outputs/videos"
+data           : 
+dataset_path   : "data/AIST_PLUS_PLUS"
+sequence_length: 120     # Reduced from 240 for CPU
+train_split    : 0.8
+val_split      : 0.2
+
+paths      : 
+checkpoints: "outputs/checkpoints_stable"
+logs       : "outputs/logs_stable"
+reports    : "outputs/reports_stable"
+videos     : "outputs/videos_stable"
 
 device: "cpu"

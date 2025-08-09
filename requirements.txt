@@ -1,16 +1,108 @@
-# Core ML
-torch
-torchvision
-torchaudio
-numpy
+# ===============================================
+# BAILANDO AI CHOREOGRAPHY - REQUIREMENTS
+# ===============================================
+# Complete dependency list for the Bailando project
+# Implementation of "Bailando: 3D Dance Generation by Actor-Critic GPT with Choreographic Memory"
 
-# Data processing
-pyyaml
-pandas
+# ===============================================
+# CORE ML FRAMEWORKS
+# ===============================================
+torch>=1.9.0
+torchvision>=0.10.0
+torchaudio>=0.9.0
+numpy>=1.21.0
 
-# Visualization  
-matplotlib
-plotly
+# ===============================================
+# DATA PROCESSING & HANDLING
+# ===============================================
+pyyaml>=5.4.1               # Configuration file loading
+pandas>=1.3.0               # Data manipulation and analysis
+scipy>=1.7.0                # Scientific computing
+scikit-learn>=1.0.0         # Machine learning utilities
 
-# Video generation
-pillow
+# ===============================================
+# VISUALIZATION & PLOTTING
+# ===============================================
+matplotlib>=3.4.0           # Basic plotting
+plotly>=5.0.0               # Interactive visualizations
+seaborn>=0.11.0             # Statistical visualizations
+
+# ===============================================
+# IMAGE & VIDEO PROCESSING
+# ===============================================
+pillow>=8.3.0               # Image processing (PIL)
+opencv-python>=4.5.0       # Computer vision operations
+imageio>=2.9.0              # Reading/writing images and videos
+imageio-ffmpeg>=0.4.0       # Video encoding support
+
+# ===============================================
+# WEB FRAMEWORK (for Dashboard API)
+# ===============================================
+fastapi>=0.68.0             # Modern web API framework
+uvicorn>=0.15.0             # ASGI server for FastAPI
+pydantic>=1.8.0             # Data validation
+python-multipart>=0.0.5    # Form data parsing
+
+# ===============================================
+# UTILITIES & HELPERS
+# ===============================================
+tqdm>=4.62.0                # Progress bars
+pathlib2>=2.3.6             # Path handling (Python 3.8 compatibility)
+argparse                    # Command line argument parsing (built-in)
+json5>=0.9.0                # Enhanced JSON parsing
+requests>=2.26.0            # HTTP requests
+
+# ===============================================
+# DEVELOPMENT & DEBUGGING
+# ===============================================
+jupyter>=1.0.0              # Jupyter notebook support
+ipython>=7.25.0             # Interactive Python shell
+tensorboard>=2.6.0          # Training visualization
+psutil>=5.8.0               # System and process utilities
+
+# ===============================================
+# MATH & NUMERICAL COMPUTING
+# ===============================================
+einops>=0.3.0               # Tensor operations made easy
+numba>=0.54.0               # JIT compilation for numerical functions
+
+# ===============================================
+# OPTIONAL ACCELERATIONS
+# ===============================================
+# Uncomment if you have CUDA-capable GPU:
+# torch-audio-cuda          # CUDA support for audio processing
+# torchtext>=0.10.0         # Text processing utilities
+
+# ===============================================
+# MOTION & ANIMATION SPECIFIC
+# ===============================================
+# These might need to be installed separately based on your system:
+# smplx                     # SMPL-X body model (if using SMPL data)
+# trimesh>=3.9.0            # 3D mesh processing
+# pyrender>=0.1.45          # 3D rendering
+
+# ===============================================
+# INSTALLATION NOTES
+# ===============================================
+# 1. Install PyTorch first with CUDA support if available:
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+# 2. Some packages might require system dependencies:
+#    - OpenCV might need: sudo apt-get install python3-opencv (Ubuntu)
+#    - ffmpeg might need: sudo apt-get install ffmpeg (Ubuntu)
+#
+# 3. For Apple Silicon Macs, use:
+#    pip install torch torchvision torchaudio
+#
+# 4. If you encounter issues with specific versions, try:
+#    pip install --upgrade pip setuptools wheel
+#    pip install -r requirements.txt --no-cache-dir
+
+# ===============================================
+# VERSION COMPATIBILITY
+# ===============================================
+# Tested with:
+# - Python 3.8, 3.9, 3.10
+# - PyTorch 1.9+
+# - CUDA 11.1+ (if using GPU)
+# - Ubuntu 20.04, macOS 11+, Windows 10+

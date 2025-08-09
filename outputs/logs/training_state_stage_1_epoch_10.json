@@ -1,0 +1,64 @@
+{
+  "stage": 1,
+  "epoch": 9,
+  "loss": 127.17348166487433,
+  "timestamp": "2025-08-08T14:58:51.126052",
+  "config": {
+    "model": {
+      "motion_dim": 72,
+      "latent_dim": 256,
+      "codebook_size": 1024,
+      "gpt_layers": 12,
+      "embed_dim": 512
+    },
+    "training": {
+      "learning_rate": 0.0001,
+      "batch_size": 8,
+      "epochs": 100,
+      "save_interval": 10,
+      "save_every": 10,
+      "validation_interval": 10,
+      "gradient_clip": 1.0,
+      "vq_vae_epochs": 100,
+      "gpt_epochs": 50,
+      "critic_epochs": 25,
+      "vq_vae_lr": 0.0001,
+      "gpt_lr": 3e-05,
+      "critic_lr": 0.0001,
+      "warmup_epochs": 5,
+      "scheduler_patience": 10,
+      "early_stopping_patience": 20
+    },
+    "data": {
+      "dataset_path": "data/AIST_PLUS_PLUS",
+      "motion_dir": "motions",
+      "keypoints_dir": "keypoints3d",
+      "splits_dir": "splits",
+      "sequence_length": 240,
+      "fps": 30
+    },
+    "device": "cpu",
+    "paths": {
+      "checkpoints": "outputs/checkpoints",
+      "logs": "outputs/logs",
+      "models": "outputs/models"
+    },
+    "logging": {
+      "level": "INFO",
+      "log_interval": 10,
+      "tensorboard": true
+    },
+    "loss_weights": {
+      "reconstruction": 1.0,
+      "commitment": 0.25,
+      "codebook": 1.0,
+      "perceptual": 0.1
+    },
+    "optimization": {
+      "beta1": 0.9,
+      "beta2": 0.999,
+      "eps": 1e-08,
+      "weight_decay": 0.01
+    }
+  }
+}
