@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, BookOpen, Code, Brain, Database, MemoryStick } from 'lucide-react';
+import { ChevronDown, ChevronRight, BookOpen, Code, Brain, Database, MemoryStick, Settings } from 'lucide-react';
 
-// Import all the small components
 import SimpleArchitectureFlow from './SimpleArchitectureFlow';
 import DataMatrixVisualizer from '../charts/DataMatrixVisualizer';
 import LossPointSystem from '../charts/LossPointSystem';
 import SimpleMemoryContext from './SimpleMemoryContext';
 import CodeSnippetViewer from '../code/CodeSnippetViewer';
-
+import DataPreparationSection from './DataPreparationSection'; 
 const BailandoIntroContainer = () => {
-  const [activeSection, setActiveSection] = useState('architecture');
+  const [activeSection, setActiveSection] = useState('preparation'); 
   const [isExpanded, setIsExpanded] = useState(true);
 
   const sections = [
+    {
+      id: 'preparation',
+      title: 'Data Preparation',
+      icon: Settings,
+      component: DataPreparationSection,
+      description: 'How AIST++ dataset is loaded, processed, and prepared for training'
+    },
     {
       id: 'architecture',
       title: 'Architecture Flow',
@@ -48,11 +54,11 @@ const BailandoIntroContainer = () => {
       icon: Code,
       component: CodeSnippetViewer,
       description: 'Real code from your Bailando implementation'
-    }
+    },
   ];
 
   const activeComponent = sections.find(s => s.id === activeSection)?.component;
-  const ActiveComponent = activeComponent || SimpleArchitectureFlow;
+  const ActiveComponent = activeComponent || DataPreparationSection;
 
   return (
     <div className="bg-gradient-to-r from-blue-900 to-purple-900 border border-blue-700 rounded-lg mb-6">
@@ -72,6 +78,9 @@ const BailandoIntroContainer = () => {
             </p>
             <p className="text-blue-400 text-xs mt-1">
               Interactive visualizations • Real code examples • Mathematical formulas
+            </p>
+            <p className="text-blue-400 text-xs mt-1">
+              Explore the inner workings of Bailando step by step
             </p>
           </div>
         </div>
@@ -97,7 +106,7 @@ const BailandoIntroContainer = () => {
       {isExpanded && (
         <div className="px-6 pb-6">
           {/* Section Navigation */}
-          <div className="grid grid-cols-5 gap-2 mb-6">
+          <div className="grid grid-cols-6 gap-2 mb-6">
             {sections.map((section) => {
               const Icon = section.icon;
               const isActive = activeSection === section.id;
@@ -123,6 +132,7 @@ const BailandoIntroContainer = () => {
                   <p className="text-xs text-gray-400 leading-tight">
                     {section.description}
                   </p>
+                  
                 </motion.button>
               );
             })}
@@ -174,7 +184,7 @@ const BailandoIntroContainer = () => {
           {/* Learning Path */}
           <div className="mt-4 bg-blue-900 bg-opacity-30 p-4 rounded border border-blue-600">
             <h4 className="text-blue-300 font-semibold mb-2">💡 Recommended Learning Path:</h4>
-            <div className="text-blue-200 text-sm grid grid-cols-1 md:grid-cols-5 gap-2">
+            <div className="text-blue-200 text-sm grid grid-cols-1 md:grid-cols-6 gap-2">
               {sections.map((section, idx) => (
                 <div key={section.id} className="flex items-center space-x-2">
                   <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center ${

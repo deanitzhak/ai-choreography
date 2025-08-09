@@ -1,18 +1,9 @@
-#!/usr/bin/env python3
-"""
-Bailando Training Script
-- Supports starting fresh, resuming from latest, or resuming from a specific checkpoint
-- Overwrites checkpoints per stage (model_stage_{stage}_latest.pth)
-- Keeps all JSON logs for full training history
-"""
 
 import os
 import sys
 import json
 import torch
 from pathlib import Path
-
-# Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.services.config_service import ConfigService
@@ -22,14 +13,11 @@ from lib.data_preparation.dataset_builder import BailandoDataset
 
 
 
-
+# Note the trainstage is for 
 def train_stage(model, data_loader, config, stage, start_epoch=0):
-    """
-    Train a single stage using math service for loss calculations
-    """
     print(f"🚀 Training Stage {stage} (starting from epoch {start_epoch + 1})")
 
-    # Setup optimizer based on stage
+        # Setup optimizer based on stage 
     if stage == 1:
         optimizer = torch.optim.Adam(model.vq_vae.parameters(),
                                      lr=config['training']['vq_vae_lr'])

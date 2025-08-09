@@ -1,11 +1,6 @@
-#!/bin/bash
-#===============================================
-# BAILANDO ENVIRONMENT SETUP SCRIPT
-#===============================================
-# Automated setup for Bailando AI Choreography System
-# Run with: bash setup_environment.sh
 
-set -e  # Exit on any error
+
+set -e 
 
 echo "🎭 Setting up Bailando AI Choreography Environment..."
 echo "=================================================="

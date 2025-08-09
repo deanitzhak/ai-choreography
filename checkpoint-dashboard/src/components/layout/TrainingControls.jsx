@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Square, Settings, Wifi, WifiOff, Database, 
   RotateCcw, Zap, CheckCircle, AlertTriangle, Terminal 
 } from 'lucide-react';
 
-// 🎮 Fixed Training Controls that work with the corrected API
+// 🎮 Fixed Training Controls with Real-time WebSocket
 const TrainingControls = ({ 
   connectionState, 
   trainingData, 
@@ -29,6 +29,11 @@ const TrainingControls = ({
   const [error, setError] = useState('');
   const [logs, setLogs] = useState([]);
   const [showConsole, setShowConsole] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  
+  // WebSocket for real-time logs
+  const wsRef = useRef(null);
+  const consoleRef = useRef(null);
 
   // Resume mode options (simplified)
   const resumeModes = [
@@ -55,6 +60,91 @@ const TrainingControls = ({
     }
   ];
 
+  // 🔌 WebSocket connection for real-time logs
+  useEffect(() => {
+    const connectWebSocket = () => {
+      const clientId = `training_console_${Date.now()}`;
+      const wsUrl = `ws://localhost:8000/ws?client_id=${clientId}`;
+      
+      console.log('🔌 Training console connecting to WebSocket:', wsUrl);
+      
+      wsRef.current = new WebSocket(wsUrl);
+
+      wsRef.current.onopen = () => {
+        console.log('✅ Training console WebSocket connected');
+        setWsConnected(true);
+      };
+
+      wsRef.current.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('📨 Training console received:', message);
+          
+          if (message.type === 'training_log') {
+            setLogs(prev => {
+              const newLog = {
+                id: Date.now() + Math.random(),
+                message: message.message,
+                timestamp: message.timestamp || new Date().toISOString(),
+                type: 'log'
+              };
+              
+              // Keep only last 50 logs for performance and show newest first
+              return [newLog, ...prev].slice(0, 50);
+            });
+          }
+          
+          // Handle other message types
+          if (message.type === 'training_started') {
+            console.log('🚀 Training started message received');
+            setLogs(prev => [{
+              id: Date.now(),
+              message: '🚀 Training started!',
+              timestamp: new Date().toISOString(),
+              type: 'info'
+            }, ...prev]);
+          }
+          
+          if (message.type === 'training_complete') {
+            console.log('✅ Training completed message received');
+            setLogs(prev => [{
+              id: Date.now(),
+              message: `✅ Training completed: ${message.message}`,
+              timestamp: new Date().toISOString(),
+              type: 'success'
+            }, ...prev]);
+          }
+          
+        } catch (error) {
+          console.error('❌ Error parsing WebSocket message:', error);
+        }
+      };
+
+      wsRef.current.onclose = (event) => {
+        console.log('🔌 Training console WebSocket disconnected:', event.code);
+        setWsConnected(false);
+        
+        // Auto-reconnect after 3 seconds if not a normal closure
+        if (event.code !== 1000) {
+          setTimeout(connectWebSocket, 3000);
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('🔌 Training console WebSocket error:', error);
+        setWsConnected(false);
+      };
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
   // 🔧 Load available configs and checkpoints
   useEffect(() => {
     loadAvailableConfigs();
@@ -63,13 +153,12 @@ const TrainingControls = ({
     }
   }, [trainingConfig.resume_mode]);
 
-  // 📊 Fetch training logs periodically
+  // Auto-scroll console to top when new logs arrive
   useEffect(() => {
-    if (trainingData.isTraining) {
-      const interval = setInterval(fetchLogs, 2000); // Every 2 seconds
-      return () => clearInterval(interval);
+    if (consoleRef.current && logs.length > 0) {
+      consoleRef.current.scrollTop = 0;
     }
-  }, [trainingData.isTraining]);
+  }, [logs]);
 
   const loadAvailableConfigs = async () => {
     try {
@@ -116,15 +205,24 @@ const TrainingControls = ({
     }
   };
 
-  const fetchLogs = async () => {
+  // 📋 Fetch logs via HTTP as fallback
+  const fetchLogsHttp = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/training/logs?last_lines=20');
       if (response.ok) {
         const data = await response.json();
-        setLogs(data.logs || []);
+        if (data.success && data.logs) {
+          const formattedLogs = data.logs.map((log, index) => ({
+            id: Date.now() + index,
+            message: log,
+            timestamp: new Date().toISOString(),
+            type: 'log'
+          }));
+          setLogs(formattedLogs.reverse()); // Reverse to show newest first
+        }
       }
     } catch (error) {
-      console.warn('Failed to fetch logs:', error);
+      console.warn('Failed to fetch logs via HTTP:', error);
     }
   };
 
@@ -152,6 +250,8 @@ const TrainingControls = ({
         alert(`Training failed: ${result.error}`);
       } else {
         setShowConsole(true); // Auto-show console when training starts
+        // Clear previous logs when starting new training
+        setLogs([]);
       }
     } catch (error) {
       console.error('Training start error:', error);
@@ -182,6 +282,26 @@ const TrainingControls = ({
     };
   };
 
+  // 🎨 Get log message color
+  const getLogColor = (message) => {
+    if (message.includes('❌') || message.includes('Error') || message.includes('error')) {
+      return 'text-red-300';
+    }
+    if (message.includes('⚠️') || message.includes('Warning') || message.includes('warning')) {
+      return 'text-yellow-300';
+    }
+    if (message.includes('✅') || message.includes('Success') || message.includes('success')) {
+      return 'text-green-300';
+    }
+    if (message.includes('🚀') || message.includes('Starting') || message.includes('Epoch')) {
+      return 'text-blue-300';
+    }
+    if (message.includes('📊') || message.includes('📋') || message.includes('Debug')) {
+      return 'text-purple-300';
+    }
+    return 'text-gray-300';
+  };
+
   const { isConnected } = connectionState;
   const { isTraining } = trainingData;
 
@@ -192,16 +312,29 @@ const TrainingControls = ({
         <div className="flex items-center space-x-3">
           <h2 className="text-xl font-bold text-white">Training Control</h2>
           
-          {/* Connection Indicator */}
-          <div className="flex items-center space-x-2">
-            {isConnected ? (
-              <Wifi className="w-4 h-4 text-green-400" />
-            ) : (
-              <WifiOff className="w-4 h-4 text-red-400" />
-            )}
-            <span className={`text-sm ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-              {isConnected ? 'Connected' : 'Disconnected'}
-            </span>
+          {/* Connection Indicators */}
+          <div className="flex items-center space-x-4">
+            {/* API Connection */}
+            <div className="flex items-center space-x-2">
+              {isConnected ? (
+                <Wifi className="w-4 h-4 text-green-400" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-red-400" />
+              )}
+              <span className={`text-sm ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                API: {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
+            
+            {/* WebSocket Connection */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${
+                wsConnected ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'
+              }`} />
+              <span className={`text-sm ${wsConnected ? 'text-blue-400' : 'text-gray-400'}`}>
+                WS: {wsConnected ? 'Live' : 'Offline'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -248,7 +381,7 @@ const TrainingControls = ({
         </div>
       )}
 
-      {/* Console Output */}
+      {/* Console Output - Enhanced with WebSocket */}
       <AnimatePresence>
         {showConsole && (
           <motion.div
@@ -261,24 +394,65 @@ const TrainingControls = ({
               <div className="flex items-center space-x-2">
                 <Terminal className="w-4 h-4 text-green-400" />
                 <span className="text-white font-medium">Training Console</span>
+                <div className={`w-2 h-2 rounded-full ${
+                  wsConnected ? 'bg-green-400 animate-pulse' : 'bg-red-500'
+                }`} />
               </div>
-              <span className="text-sm text-gray-400">
-                {logs.length} lines {isTraining && '(Live)'}
-              </span>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-400">
+                  {logs.length} lines {wsConnected && '(Live)'}
+                </span>
+                <button
+                  onClick={fetchLogsHttp}
+                  className="text-blue-400 hover:text-blue-300 text-sm"
+                >
+                  Refresh
+                </button>
+                <button
+                  onClick={() => setLogs([])}
+                  className="text-red-400 hover:text-red-300 text-sm"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
             
-            <div className="p-4 max-h-64 overflow-y-auto font-mono text-sm">
+            <div 
+              ref={consoleRef}
+              className="p-4 max-h-64 overflow-y-auto font-mono text-sm"
+            >
               {logs.length > 0 ? (
                 <div className="space-y-1">
-                  {logs.map((log, index) => (
-                    <div key={index} className="text-green-300">
-                      {log}
+                  {logs.map((log) => (
+                    <div key={log.id} className="flex items-start space-x-2 hover:bg-gray-800 hover:bg-opacity-30 px-1 py-0.5 rounded">
+                      <span className="text-gray-500 text-xs shrink-0 mt-0.5">
+                        {new Date(log.timestamp).toLocaleTimeString()}
+                      </span>
+                      <span className={`flex-1 break-words ${getLogColor(log.message)}`}>
+                        {log.message}
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-gray-500">
-                  {isTraining ? 'Waiting for output...' : 'No logs available. Start training to see output.'}
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <Terminal className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <div className="mb-2">
+                      {isTraining 
+                        ? (wsConnected ? 'Waiting for training output...' : 'WebSocket disconnected - trying to reconnect...') 
+                        : 'No logs available. Start training to see output.'
+                      }
+                    </div>
+                    {!wsConnected && (
+                      <button
+                        onClick={fetchLogsHttp}
+                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      >
+                        Load Recent Logs
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -286,6 +460,7 @@ const TrainingControls = ({
         )}
       </AnimatePresence>
 
+      {/* Rest of your existing component (Training Mode, Configuration, etc.) */}
       {/* Resume Mode Selection */}
       <div>
         <h3 className="text-white font-semibold mb-3">Training Mode</h3>

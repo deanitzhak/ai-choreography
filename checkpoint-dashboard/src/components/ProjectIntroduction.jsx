@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Brain, Target, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
-
+import DataPreparationSection from './layout/DataPreparationSection';
 const ProjectIntroduction = ({ isExpanded, onToggle, latestCheckpoint }) => {
     // Analyze current training status
   const getDiagnosticStatus = () => {
@@ -236,6 +236,7 @@ const ProjectIntroduction = ({ isExpanded, onToggle, latestCheckpoint }) => {
               </div>
             </div>
           </div>
+          
         </div>
       )}
     </div>

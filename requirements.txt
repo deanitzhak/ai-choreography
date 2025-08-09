@@ -66,43 +66,4 @@ psutil>=5.8.0               # System and process utilities
 einops>=0.3.0               # Tensor operations made easy
 numba>=0.54.0               # JIT compilation for numerical functions
 
-# ===============================================
-# OPTIONAL ACCELERATIONS
-# ===============================================
-# Uncomment if you have CUDA-capable GPU:
-# torch-audio-cuda          # CUDA support for audio processing
-# torchtext>=0.10.0         # Text processing utilities
-
-# ===============================================
-# MOTION & ANIMATION SPECIFIC
-# ===============================================
-# These might need to be installed separately based on your system:
-# smplx                     # SMPL-X body model (if using SMPL data)
-# trimesh>=3.9.0            # 3D mesh processing
-# pyrender>=0.1.45          # 3D rendering
-
-# ===============================================
-# INSTALLATION NOTES
-# ===============================================
-# 1. Install PyTorch first with CUDA support if available:
-#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-#
-# 2. Some packages might require system dependencies:
-#    - OpenCV might need: sudo apt-get install python3-opencv (Ubuntu)
-#    - ffmpeg might need: sudo apt-get install ffmpeg (Ubuntu)
-#
-# 3. For Apple Silicon Macs, use:
-#    pip install torch torchvision torchaudio
-#
-# 4. If you encounter issues with specific versions, try:
-#    pip install --upgrade pip setuptools wheel
-#    pip install -r requirements.txt --no-cache-dir
-
-# ===============================================
-# VERSION COMPATIBILITY
-# ===============================================
-# Tested with:
-# - Python 3.8, 3.9, 3.10
-# - PyTorch 1.9+
-# - CUDA 11.1+ (if using GPU)
-# - Ubuntu 20.04, macOS 11+, Windows 10+checkpoint-dashboard
+# 

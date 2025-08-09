@@ -14,7 +14,8 @@ from routes import (
     checkpoint_routes,
     config_routes,
     conclusion_routes,
-    file_routes
+    file_routes,
+    DanceGenerationAPI
 )
 
 # Connect the WebSocket manager to training routes
@@ -43,6 +44,7 @@ app.include_router(checkpoint_routes.router)
 app.include_router(config_routes.router)
 app.include_router(conclusion_routes.router)
 app.include_router(file_routes.router)
+app.include_router(DanceGenerationAPI.router)
 
 # WebSocket endpoint
 @app.websocket("/ws")

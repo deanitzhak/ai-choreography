@@ -9,7 +9,7 @@ import {
 import Dashboard from './components/Dashboard';
 import RealTimeTrainingPanel from './components/layout/RealTimeTrainingPanel';
 import CodeExplorer from './components/code/CodeExplorer';
-
+import DanceVisualization from './components/visualization/DanceVisualization';
 const MainApp = () => {
   const [activeView, setActiveView] = useState('dashboard');
 
@@ -29,25 +29,18 @@ const MainApp = () => {
       color: 'green'
     },
     {
-      id: 'optimization',
-      title: 'Model Optimization',
-      icon: Settings,
-      description: 'Optimize configurations and analyze performance',
-      color: 'purple'
-    },
-    {
-      id: 'monitoring',
-      title: 'System Monitor',
-      icon: Monitor,
-      description: 'Hardware usage, memory, and system diagnostics',
-      color: 'orange'
-    },
-    {
       id: 'code',
       title: 'Code Explorer',
       icon: Code,
       description: 'Explore and edit code snippets',
       color: 'cyan'
+    },
+    {
+      id: 'visualization',
+      title: 'Dance Visualization',
+      icon: Monitor,
+      description: 'Visualize dance movements and patterns',
+      color: 'purple'
     }
   ];
 
@@ -68,12 +61,10 @@ const MainApp = () => {
         return <Dashboard />;
       case 'training':
         return <RealTimeTrainingPanel />;
-      case 'optimization':
-        return <ModelOptimizationPanel />;
-      case 'monitoring':
-        return <SystemMonitorPanel />;
       case 'code':
         return <CodeExplorer />;
+      case 'visualization':
+        return <DanceVisualization />;
       default:
         return <Dashboard />;
     }

@@ -6,10 +6,9 @@ const CodeSnippetViewer = () => {
   const [selectedCode, setSelectedCode] = useState('vq_loss');
   const [copied, setCopied]             = useState('');
 
-      // Code snippets from your actual project
   const codeSnippets = {
     vq_loss: {
-      title   : 'VQ-VAE Loss (from your MathService)',
+      title   : 'VQ-VAE Loss (Fromt MathService)',
       language: 'python',
       code    : `@staticmethod
 def vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25): 
@@ -29,7 +28,7 @@ def vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25):
     },
     
     gpt_forward: {
-      title   : 'GPT Forward Pass (from your GPTModel)',
+      title   : 'GPT Forward Pass (from GPTModel)',
       language: 'python',
       code    : `def forward(self, tokens, music_features=None):
     batch_size, seq_len = tokens.shape
@@ -51,7 +50,7 @@ def vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25):
     },
 
     train_loop: {
-      title   : 'Training Loop (from your train_bailando.py)',
+      title   : 'Training Loop (from train_bailando.py)',
       language: 'python',
       code    : `def train_stage(model, data_loader, config, stage):
     for epoch in range(epochs): 
@@ -75,7 +74,7 @@ def vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25):
     },
 
     dataset_loader: {
-      title   : 'AIST++ Data Loading (from your BailandoDataset)',
+      title   : 'AIST++ Data Loading (from BailandoDataset)',
       language: 'python',
       code    : `def __getitem__(self, idx):
     file_path = self.motion_files[idx]
@@ -117,7 +116,7 @@ def vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25):
       {/* Header */}
       <div  className = "flex items-center space-x-2 mb-4">
       <Code className = "w-5 h-5 text-blue-400" />
-      <h3   className = "text-lg font-bold text-white">Code From Your Project</h3>
+      <h3   className = "text-lg font-bold text-white">Code From Project</h3>
       </div>
 
       {/* Code Selection Tabs */}
@@ -166,7 +165,7 @@ def vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25):
             
             <button
               className = "p-2 bg-green-700 hover:bg-green-600 rounded transition-colors"
-              title     = "This is from your working code"
+              title     = "This is from working code"
             >
               <Play className = "w-4 h-4 text-white" />
             </button>

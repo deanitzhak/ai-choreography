@@ -234,18 +234,82 @@ class BailandoModel(nn.Module):
         return motion_sequence
     
     def actor_critic_forward(self, motion, music):
-        """
-        # Actor-Critic forward pass for RL training
-        # Returns: advantages, log_probs, values, returns, entropy
-        """
-        # Simplified implementation for demonstration
-        batch_size, seq_len, _ = motion.shape
-        
-        # Dummy values for now - implement proper RL logic here
-        advantages = torch.randn(batch_size, seq_len)
-        log_probs = torch.randn(batch_size, seq_len)
-        values = torch.randn(batch_size, seq_len)
-        returns = torch.randn(batch_size, seq_len)
-        entropy = torch.randn(batch_size, seq_len)
-        
-        return advantages, log_probs, values, returns, entropy
+            """
+            # Actor-Critic forward pass for RL training
+            # Returns: advantages, log_probs, values, returns, entropy
+            """
+            batch_size, original_seq_len, motion_dim = motion.shape
+            device = motion.device
+            
+            # Get quantized codes from motion (with gradients)
+            _, _, z_q, _, indices = self.vq_vae(motion)
+            
+            # Forward through GPT to get action probabilities
+            if indices.dim() > 2:
+                indices = indices.view(batch_size, -1)
+            
+            # Handle sequence length for GPT input/output
+            gpt_seq_len = indices.size(1)
+            
+            if gpt_seq_len <= 1:
+                # If sequence too short, use simplified approach
+                seq_len_for_output = original_seq_len
+                
+                # Create dummy outputs with proper gradients
+                log_probs = torch.zeros(batch_size, seq_len_for_output, device=device, requires_grad=True)
+                entropy = torch.zeros(batch_size, seq_len_for_output, device=device, requires_grad=True)
+                
+            else:
+                # Use GPT for proper sequence modeling
+                # For GPT: input = all tokens except last, target = all tokens except first
+                gpt_input_indices = indices[:, :-1]  # Shape: [batch, seq_len-1]
+                gpt_target_indices = indices[:, 1:]   # Shape: [batch, seq_len-1]
+                
+                # Get logits from GPT (with gradients)
+                logits = self.gpt(gpt_input_indices, music)  # Shape: [batch, seq_len-1, vocab_size]
+                
+                # Convert logits to probabilities and calculate log_probs
+                probs = F.softmax(logits, dim=-1)
+                action_dist = torch.distributions.Categorical(probs)
+                
+                # Get log probabilities for the target tokens
+                log_probs_gpt = action_dist.log_prob(gpt_target_indices)  # Shape: [batch, seq_len-1]
+                
+                # Calculate entropy
+                entropy_gpt = action_dist.entropy()  # Shape: [batch, seq_len-1]
+                
+                # Pad to match original sequence length
+                seq_len_for_output = original_seq_len
+                if log_probs_gpt.size(1) < seq_len_for_output:
+                    # Pad with zeros to match original sequence length
+                    padding_size = seq_len_for_output - log_probs_gpt.size(1)
+                    log_probs = F.pad(log_probs_gpt, (0, padding_size), value=0.0)
+                    entropy = F.pad(entropy_gpt, (0, padding_size), value=0.0)
+                else:
+                    # Truncate if somehow longer
+                    log_probs = log_probs_gpt[:, :seq_len_for_output]
+                    entropy = entropy_gpt[:, :seq_len_for_output]
+            
+            # Get state values from critic (with gradients)
+            # Use original motion for critic - DON'T change seq_len here
+            motion_for_critic = motion.view(batch_size, original_seq_len, motion_dim)
+            
+            # Average over motion dimensions for critic input
+            motion_averaged = motion_for_critic.mean(dim=-1)  # Shape: [batch_size, original_seq_len]
+            
+            # Pass through critic network - expects [batch_size, embed_dim]
+            # We need to project motion to embed_dim first
+            critic_input = motion_averaged.mean(dim=1)  # Shape: [batch_size] - average over time
+            critic_input = critic_input.unsqueeze(-1).expand(-1, self.config['embed_dim'])  # Shape: [batch_size, embed_dim]
+            
+            values_single = self.critic(critic_input)  # Shape: [batch_size, 1]
+            values = values_single.expand(batch_size, seq_len_for_output)  # Expand to match sequence
+            
+            # Calculate returns (simplified - in real RL this would use actual rewards)
+            # Add small noise to simulate reward signal
+            returns = values.detach() + torch.randn_like(values) * 0.1
+            
+            # Calculate advantages (with gradients)
+            advantages = returns - values
+            
+            return advantages, log_probs, values, returns, entropy

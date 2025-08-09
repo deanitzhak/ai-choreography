@@ -1,3 +1,4 @@
+# NOTE : we want to run fresh start staging checkpoint 
 import subprocess
 import threading
 import asyncio

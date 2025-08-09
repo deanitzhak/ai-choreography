@@ -1,3 +1,6 @@
+# NOTE : this file is for monitoring training logs
+# managing the queue of log messages
+
 import json
 import time
 from pathlib import Path

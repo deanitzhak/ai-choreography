@@ -1,3 +1,6 @@
+
+# NOTE: WebSocket Manager
+# is use for managing the connection of each connect to to server 
 import json
 import time
 from datetime import datetime

@@ -1,0 +1,381 @@
+{
+  "categories": {
+    "base_architecture": {
+      "title"      : "Base Architecture",
+      "description": "Core model components and neural network layers",
+      "icon"       : "Brain",
+      "color"      : "blue"
+    },
+    "stage_training": {
+      "title"      : "Stage Training",
+      "description": "Stage-specific training code and layer management",
+      "icon"       : "Play",
+      "color"      : "green"
+    },
+    "loss_functions": {
+      "title"      : "Loss Functions",
+      "description": "Mathematical loss computations for each training stage",
+      "icon"       : "Calculator",
+      "color"      : "purple"
+    },
+    "data_processing": {
+      "title"      : "Data Processing",
+      "description": "Dataset loading and preprocessing pipelines",
+      "icon"       : "Database",
+      "color"      : "yellow"
+    },
+    "optimization": {
+      "title"      : "Optimization",
+      "description": "Optimizers, schedulers, and gradient management",
+      "icon"       : "Zap",
+      "color"      : "red"
+    }
+  },
+
+  "code_examples": {
+    "vq_vae_architecture": {
+      "title"           : "VQ-VAE Architecture",
+      "category"        : "base_architecture",
+      "stage_relevance" : [1],
+      "layers_involved" : ["encoder", "vector_quantizer", "decoder"],
+      "file"            : "lib/models/bailando.py",
+      "line_range"      : "45-89",
+      "complexity"      : "intermediate",
+      "code"            : "class MotionVQVAE(nn.Module):\n    \"\"\"\n    # VQ-VAE for learning choreographic memory\n    # Input: Motion sequence → Output: Quantized codes\n    \"\"\"\n    \n    def __init__(self, motion_dim: int, latent_dim: int, num_embeddings: int):\n        super().__init__()\n        self.motion_dim = motion_dim  # 72 (24 joints × 3 rotations)\n        self.latent_dim = latent_dim  # 256\n        \n        # Encoder: Motion → Latent (TRAINED IN STAGE 1)\n        self.encoder = nn.Sequential(\n            nn.Linear(motion_dim, 512),\n            nn.ReLU(),\n            nn.Linear(512, 256),\n            nn.ReLU(),\n            nn.Linear(256, latent_dim)\n        )\n        \n        # Vector Quantizer (TRAINED IN STAGE 1)\n        self.vq = VectorQuantizer(num_embeddings, latent_dim)\n        \n        # Decoder: Latent → Motion (TRAINED IN STAGE 1)\n        self.decoder = nn.Sequential(\n            nn.Linear(latent_dim, 256),\n            nn.ReLU(),\n            nn.Linear(256, 512),\n            nn.ReLU(),\n            nn.Linear(512, motion_dim)\n        )\n    \n    def forward(self, x):\n        # Encode\n        z_e = self.encoder(x)\n        \n        # Quantize\n        z_q, vq_loss, indices = self.vq(z_e)\n        \n        # Decode\n        x_recon = self.decoder(z_q)\n        \n        return x_recon, z_e, z_q, vq_loss, indices",
+      "explanation"     : "Complete VQ-VAE implementation. All components (encoder, quantizer, decoder) are trained together in Stage 1.",
+      "training_details": {
+        "stage_1": {
+          "trained_layers": ["encoder", "vector_quantizer", "decoder"],
+          "frozen_layers" : [],
+          "learning_rate" : "0.0001",
+          "epochs"        : 100,
+          "optimizer"     : "Adam(model.vq_vae.parameters())"
+        },
+        "stage_2": {
+          "trained_layers": [],
+          "frozen_layers" : ["encoder", "vector_quantizer", "decoder"],
+          "note"          : "Entire VQ-VAE frozen, used only for code generation"
+        },
+        "stage_3": {
+          "trained_layers": [],
+          "frozen_layers" : ["encoder", "vector_quantizer", "decoder"],
+          "note"          : "VQ-VAE remains frozen, used for state representation"
+        }
+      }
+    },
+
+    "vector_quantizer": {
+      "title"           : "Vector Quantizer",
+      "category"        : "base_architecture",
+      "stage_relevance" : [1],
+      "layers_involved" : ["vector_quantizer"],
+      "file"            : "lib/models/bailando.py",
+      "line_range"      : "15-44",
+      "complexity"      : "advanced",
+      "code"            : "class VectorQuantizer(nn.Module):\n    \"\"\"\n    # Vector Quantization layer for choreographic memory\n    # Formula: z_q = argmin_k ||z_e - e_k||²\n    \"\"\"\n    \n    def __init__(self, num_embeddings: int, embedding_dim: int, commitment_cost: float = 0.25):\n        super().__init__()\n        self.embedding_dim = embedding_dim  # 256\n        self.num_embeddings = num_embeddings  # 1024\n        self.commitment_cost = commitment_cost\n        \n        # Codebook embeddings: K x D (1024 x 256)\n        self.embedding = nn.Embedding(num_embeddings, embedding_dim)\n        self.embedding.weight.data.uniform_(-1/num_embeddings, 1/num_embeddings)\n    \n    def forward(self, inputs):\n        input_shape = inputs.shape\n        flat_input = inputs.view(-1, self.embedding_dim)\n        \n        # Calculate distances: ||z_e - e_k||²\n        distances = (torch.sum(flat_input**2, dim=1, keepdim=True) \n                    + torch.sum(self.embedding.weight**2, dim=1)\n                    - 2 * torch.matmul(flat_input, self.embedding.weight.t()))\n        \n        # Find closest codebook entries\n        encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)\n        encodings = torch.zeros(encoding_indices.shape[0], self.num_embeddings, device=inputs.device)\n        encodings.scatter_(1, encoding_indices, 1)\n        \n        # Quantize and apply straight-through estimator\n        quantized = torch.matmul(encodings, self.embedding.weight).view(input_shape)\n        \n        # Calculate VQ loss\n        e_latent_loss = F.mse_loss(quantized.detach(), inputs)\n        q_latent_loss = F.mse_loss(quantized, inputs.detach())\n        loss = q_latent_loss + self.commitment_cost * e_latent_loss\n        \n        # Straight-through estimator for gradients\n        quantized = inputs + (quantized - inputs).detach()\n        \n        return quantized, loss, encoding_indices.view(input_shape[:-1])",
+      "explanation"     : "Vector quantization layer that maps continuous latents to discrete codebook entries. Core of choreographic memory.",
+      "training_details": {
+        "stage_1": {
+          "trained_layers": ["embedding.weight"],
+          "note"          : "Codebook learns to represent dance motion patterns"
+        }
+      }
+    },
+
+    "gpt_architecture": {
+      "title"           : "GPT Architecture",
+      "category"        : "base_architecture",
+      "stage_relevance" : [2, 3],
+      "layers_involved" : ["token_embedding", "pos_embedding", "transformer_layers", "output_projection"],
+      "file"            : "lib/models/bailando.py",
+      "line_range"      : "91-135",
+      "complexity"      : "advanced",
+      "code"            : "class GPTModel(nn.Module):\n    \"\"\"\n    # GPT model for sequence generation\n    # Input: Quantized codes + Music → Output: Next codes\n    \"\"\"\n    \n    def __init__(self, vocab_size: int, embed_dim: int, num_heads: int, num_layers: int):\n        super().__init__()\n        self.embed_dim = embed_dim  # 512\n        \n        # Token embeddings (TRAINED IN STAGE 2)\n        self.token_embedding = nn.Embedding(vocab_size, embed_dim)\n        self.pos_embedding = nn.Parameter(torch.randn(1024, embed_dim))\n        \n        # Transformer layers (TRAINED IN STAGE 2)\n        self.layers = nn.ModuleList([\n            nn.TransformerDecoderLayer(\n                d_model=embed_dim,\n                nhead=num_heads,\n                dim_feedforward=embed_dim * 4,\n                dropout=0.1,\n                batch_first=True\n            ) for _ in range(num_layers)\n        ])\n        \n        # Output projection (TRAINED IN STAGE 2)\n        self.output_projection = nn.Linear(embed_dim, vocab_size)\n    \n    def forward(self, tokens, music_features=None):\n        batch_size, seq_len = tokens.shape\n        \n        # Token + Position embeddings\n        token_emb = self.token_embedding(tokens)\n        pos_emb = self.pos_embedding[:seq_len].unsqueeze(0)\n        x = token_emb + pos_emb\n        \n        # Apply transformer layers\n        for layer in self.layers:\n            x = layer(x, x)  # Self-attention\n        \n        # Output projection to vocabulary\n        logits = self.output_projection(x)\n        \n        return logits",
+      "explanation"     : "GPT transformer for autoregressive dance generation. Predicts next dance tokens given previous sequence.",
+      "training_details": {
+        "stage_1": {
+          "trained_layers": [],
+          "frozen_layers" : ["not_initialized"],
+          "note"          : "GPT not used in Stage 1"
+        },
+        "stage_2": {
+          "trained_layers": ["token_embedding", "pos_embedding", "transformer_layers", "output_projection"],
+          "frozen_layers" : [],
+          "learning_rate" : "0.00003",
+          "epochs"        : 50,
+          "optimizer"     : "Adam(model.gpt.parameters())"
+        },
+        "stage_3": {
+          "trained_layers": ["transformer_layers", "output_projection"],
+          "frozen_layers" : ["token_embedding", "pos_embedding"],
+          "note"          : "Fine-tuning for better policy generation"
+        }
+      }
+    },
+
+    "actor_critic_architecture": {
+      "title"           : "Actor-Critic Architecture",
+      "category"        : "base_architecture",
+      "stage_relevance" : [3],
+      "layers_involved" : ["critic"],
+      "file"            : "lib/models/bailando.py",
+      "line_range"      : "180-195",
+      "complexity"      : "intermediate",
+      "code"            : "# Actor-Critic Components (TRAINED IN STAGE 3 ONLY)\nclass BailandoModel(nn.Module):\n    def __init__(self, config: dict):\n        # ... VQ-VAE and GPT initialization ...\n        \n        # Critic network for RL (TRAINED IN STAGE 3)\n        self.critic = nn.Sequential(\n            nn.Linear(embed_dim, 256),\n            nn.ReLU(),\n            nn.Linear(256, 1)\n        )\n        \n    def actor_critic_forward(self, motion, music):\n        \"\"\"\n        # Actor-Critic forward pass for RL training\n        # Returns: advantages, log_probs, values, returns, entropy\n        \"\"\"\n        batch_size, original_seq_len, motion_dim = motion.shape\n        device = motion.device\n        \n        # Get quantized codes from motion (with gradients)\n        _, _, z_q, _, indices = self.vq_vae(motion)\n        \n        # Actor: Use GPT for action probabilities\n        logits = self.gpt(indices[:, :-1], music)\n        probs = F.softmax(logits, dim=-1)\n        action_dist = torch.distributions.Categorical(probs)\n        log_probs = action_dist.log_prob(indices[:, 1:])\n        entropy = action_dist.entropy()\n        \n        # Critic: Evaluate state values\n        motion_averaged = motion.mean(dim=-1).mean(dim=1)\n        critic_input = motion_averaged.unsqueeze(-1).expand(-1, self.config['embed_dim'])\n        values = self.critic(critic_input).expand(batch_size, original_seq_len)\n        \n        # Calculate advantages and returns\n        returns = values.detach() + torch.randn_like(values) * 0.1\n        advantages = returns - values\n        \n        return advantages, log_probs, values, returns, entropy",
+      "explanation"     : "Actor-Critic components for reinforcement learning. Critic is new, Actor uses existing GPT.",
+      "training_details": {
+        "stage_3": {
+          "trained_layers": ["critic", "gpt_layers"],
+          "frozen_layers" : ["vq_vae"],
+          "learning_rate" : "0.0001",
+          "epochs"        : 30,
+          "optimizer"     : "Adam([{'params': model.gpt.parameters()}, {'params': model.critic.parameters()}])",
+          "note"          : "Critic trained from scratch, GPT fine-tuned as Actor"
+        }
+      }
+    },
+
+    "stage_1_training": {
+      "title"           : "Stage 1: VQ-VAE Training Loop",
+      "category"        : "stage_training",
+      "stage_relevance" : [1],
+      "layers_involved" : ["vq_vae"],
+      "file"            : "scripts/train_bailando.py",
+      "line_range"      : "98-110",
+      "complexity"      : "beginner",
+      "code"            : "# Stage 1: VQ-VAE Training Loop\nif stage == 1:\n    # Setup optimizer for VQ-VAE ONLY\n    optimizer = torch.optim.Adam(model.vq_vae.parameters(),\n                                 lr=config['training']['vq_vae_lr'])\n    \n    for epoch in range(config['training']['vq_vae_epochs']):\n        for batch_idx, batch in enumerate(data_loader):\n            motion = batch['motion'].to(config['device'])\n            \n            # Forward pass through VQ-VAE\n            x_recon, z_e, z_q, vq_loss, indices = model.vq_vae(motion)\n            loss, losses = MathService.vq_vae_loss(x_recon, motion, z_e, z_q)\n            \n            # Backward pass - ONLY VQ-VAE parameters get gradients\n            optimizer.zero_grad()\n            loss.backward()\n            \n            # Gradient clipping\n            if 'gradient_clip' in config['training']:\n                torch.nn.utils.clip_grad_norm_(\n                    model.vq_vae.parameters(), \n                    config['training']['gradient_clip']\n                )\n            \n            optimizer.step()\n            \n            # GPT and Critic remain uninitialized/untouched",
+      "explanation"     : "Stage 1 training code showing VQ-VAE-only optimization. Other components are not initialized or used.",
+      "training_details": {
+        "optimizer_scope"   : "model.vq_vae.parameters()",
+        "trained_components": ["Encoder", "Vector Quantizer", "Decoder"],
+        "frozen_components" : ["GPT (not initialized)", "Critic (not initialized)"],
+        "loss_function"     : "VQ-VAE Loss (reconstruction + quantization + commitment)",
+        "epochs"            : 100,
+        "learning_rate"     : "0.0001"
+      }
+    },
+
+    "stage_2_training": {
+      "title"           : "Stage 2: GPT Training Loop",
+      "category"        : "stage_training",
+      "stage_relevance" : [2],
+      "layers_involved" : ["gpt"],
+      "file"            : "scripts/train_bailando.py",
+      "line_range"      : "111-140",
+      "complexity"      : "intermediate",
+      "code"            : "# Stage 2: GPT Training Loop\nelif stage == 2:\n    # Setup optimizer for GPT ONLY\n    optimizer = torch.optim.Adam(model.gpt.parameters(),\n                                 lr=config['training']['gpt_lr'])\n    \n    for epoch in range(config['training']['gpt_epochs']):\n        for batch_idx, batch in enumerate(data_loader):\n            motion = batch['motion'].to(config['device'])\n            music = batch.get('music', None)\n            \n            # Get VQ codes from FROZEN VQ-VAE\n            with torch.no_grad():\n                model.vq_vae.eval()  # Set to eval mode\n                _, _, _, _, indices = model.vq_vae(motion)\n            \n            model.gpt.train()  # Set GPT to train mode\n            \n            # Create input/target sequences for autoregressive training\n            if indices.dim() > 2:\n                indices = indices.view(indices.size(0), -1)\n            \n            if indices.size(1) <= 1:\n                print(\"⚠️ Sequence too short for GPT training\")\n                continue\n                \n            input_indices = indices[:, :-1]   # All tokens except last\n            target_indices = indices[:, 1:]   # All tokens except first\n            \n            # Forward pass through GPT\n            logits = model.gpt(input_indices, music)\n            \n            # Cross-entropy loss for next token prediction\n            loss = torch.nn.functional.cross_entropy(\n                logits.reshape(-1, logits.size(-1)),\n                target_indices.reshape(-1)\n            )\n            \n            # Backward pass - ONLY GPT parameters get gradients\n            optimizer.zero_grad()\n            loss.backward()\n            \n            # Gradient clipping\n            if 'gradient_clip' in config['training']:\n                torch.nn.utils.clip_grad_norm_(\n                    model.gpt.parameters(), \n                    config['training']['gradient_clip']\n                )\n            \n            optimizer.step()",
+      "explanation"     : "Stage 2 training showing GPT-only optimization with frozen VQ-VAE providing codes.",
+      "training_details": {
+        "optimizer_scope"   : "model.gpt.parameters()",
+        "trained_components": ["Token Embedding", "Position Embedding", "Transformer Layers", "Output Projection"],
+        "frozen_components" : ["Entire VQ-VAE", "Critic (not initialized)"],
+        "loss_function"     : "Cross-Entropy Loss for next token prediction",
+        "epochs"            : 50,
+        "learning_rate"     : "0.00003"
+      }
+    },
+
+    "stage_3_training": {
+      "title"           : "Stage 3: Actor-Critic Training Loop",
+      "category"        : "stage_training",
+      "stage_relevance" : [3],
+      "layers_involved" : ["gpt", "critic"],
+      "file"            : "scripts/train_bailando.py",
+      "line_range"      : "141-165",
+      "complexity"      : "advanced",
+      "code"            : "# Stage 3: Actor-Critic Training Loop\nelse:\n    # Setup optimizer for ACTOR-CRITIC components with different LRs\n    optimizer = torch.optim.Adam([\n        {'params': model.gpt.parameters(), 'lr': config['training']['gpt_lr']},\n        {'params': model.critic.parameters(), 'lr': config['training']['critic_lr']}\n    ])\n    \n    for epoch in range(config['training']['actor_critic_epochs']):\n        for batch_idx, batch in enumerate(data_loader):\n            motion = batch['motion'].to(config['device'])\n            music = batch.get('music', None)\n            \n            # VQ-VAE remains FROZEN - used only for state representation\n            # Actor-Critic forward pass\n            advantages, log_probs, values, returns, entropy = model.actor_critic_forward(motion, music)\n            \n            # Calculate Actor-Critic losses\n            actor_loss, critic_loss = MathService.actor_critic_loss(\n                advantages, log_probs, values, returns, entropy\n            )\n            loss = actor_loss + critic_loss\n            \n            # Backward pass - Both Actor (GPT) and Critic get gradients\n            optimizer.zero_grad()\n            loss.backward()\n            \n            # Gradient clipping\n            if 'gradient_clip' in config['training']:\n                torch.nn.utils.clip_grad_norm_([\n                    *model.gpt.parameters(),\n                    *model.critic.parameters()\n                ], config['training']['gradient_clip'])\n            \n            optimizer.step()",
+      "explanation"     : "Stage 3 training showing Actor-Critic optimization with different learning rates for Actor and Critic.",
+      "training_details": {
+        "optimizer_scope"   : "model.gpt.parameters() + model.critic.parameters()",
+        "trained_components": ["GPT (Actor)", "Critic Network"],
+        "frozen_components" : ["Entire VQ-VAE"],
+        "loss_function"     : "Actor Loss + Critic Loss (PPO-style)",
+        "epochs"            : 30,
+        "learning_rates"    : {"actor": "0.00003", "critic": "0.0001"}
+      }
+    },
+
+    "vq_vae_loss": {
+      "title"           : "VQ-VAE Loss Function",
+      "category"        : "loss_functions",
+      "stage_relevance" : [1],
+      "layers_involved" : ["loss_computation"],
+      "file"            : "lib/services/math_service.py",
+      "line_range"      : "15-35",
+      "complexity"      : "intermediate",
+      "code"            : "@staticmethod\ndef vq_vae_loss(x_recon, x_orig, z_e, z_q, beta=0.25): \n    \"\"\"\n    # VQ-VAE Loss Components (CVPR 2022 Paper Formula)\n    # L = L_recon + L_vq + β * L_commit\n    \"\"\"\n    # Reconstruction loss: ||x - x_recon||²\n    recon_loss = F.mse_loss(x_recon, x_orig)\n    \n    # VQ loss: ||sg[z_e] - z_q||²\n    # sg = stop gradient\n    vq_loss = F.mse_loss(z_q.detach(), z_e)\n    \n    # Commitment loss: β * ||z_e - sg[z_q]||²\n    commit_loss = beta * F.mse_loss(z_e, z_q.detach())\n    \n    total_loss = recon_loss + vq_loss + commit_loss\n    \n    return total_loss, {\n        'reconstruction': recon_loss.item(),\n        'vq': vq_loss.item(),\n        'commitment': commit_loss.item(),\n        'total': total_loss.item()\n    }",
+      "explanation"     : "Complete VQ-VAE loss function with reconstruction, quantization, and commitment components from the CVPR 2022 paper.",
+      "training_details": {
+        "formula"        : "L = L_recon + L_vq + β * L_commit",
+        "components"     : ["Reconstruction Loss", "VQ Loss", "Commitment Loss"],
+        "beta"           : "0.25 (commitment cost)",
+        "paper_reference": "CVPR 2022 Bailando Paper"
+      }
+    },
+
+    "actor_critic_loss": {
+      "title"           : "Actor-Critic Loss Function",
+      "category"        : "loss_functions",
+      "stage_relevance" : [3],
+      "layers_involved" : ["loss_computation"],
+      "file"            : "lib/services/math_service.py",
+      "line_range"      : "45-65",
+      "complexity"      : "advanced",
+      "code"            : "@staticmethod\ndef actor_critic_loss(advantages: torch.Tensor, log_probs: torch.Tensor,\n                     values: torch.Tensor, returns: torch.Tensor,\n                     entropy: torch.Tensor, clip_eps: float = 0.2) -> Tuple[torch.Tensor, torch.Tensor]:\n    \"\"\"\n    # Actor-Critic PPO loss computation\n    # Formula: L_actor = -A(s,a) * log π(a|s), L_critic = MSE(V(s) - R)\n    \"\"\"\n    # Actor loss: Policy gradient with advantage\n    # L_actor = -A(s,a) * log π(a|s) - λ * H(π)\n    actor_loss = -(advantages.detach() * log_probs).mean()\n    \n    # Add entropy bonus for exploration\n    entropy_bonus = 0.01 * entropy.mean()\n    actor_loss = actor_loss - entropy_bonus\n    \n    # Critic loss: Value function regression\n    # L_critic = MSE(V(s) - R)\n    critic_loss = F.mse_loss(values, returns)\n    \n    return actor_loss, critic_loss",
+      "explanation"     : "Actor-Critic loss computation for Stage 3 reinforcement learning training.",
+      "training_details": {
+        "actor_formula"      : "L_actor = -A(s,a) * log π(a|s) - λ * H(π)",
+        "critic_formula"     : "L_critic = MSE(V(s) - R)",
+        "components"         : ["Policy Gradient", "Value Function Regression", "Entropy Bonus"],
+        "entropy_coefficient": "0.01"
+      }
+    },
+
+    "dataset_loading": {
+      "title"           : "AIST++ Dataset Loading",
+      "category"        : "data_processing",
+      "stage_relevance" : [1, 2, 3],
+      "layers_involved" : ["data_loading"],
+      "file"            : "lib/data_preparation/dataset_builder.py",
+      "line_range"      : "85-120",
+      "complexity"      : "intermediate",
+      "code"            : "def __getitem__(self, idx):\n    \"\"\"\n    # Load and process AIST++ motion data\n    # Output: Ready-to-train tensors\n    \"\"\"\n    try:\n        motion_file = self.motion_files[idx]\n        \n        # Load SMPL motion data from pickle file\n        try:\n            with open(motion_file, 'rb') as f:\n                motion_data = pickle.load(f)\n        except Exception as e:\n            return {\n                'motion': torch.zeros(self.sequence_length, 72),\n                'motion_file': 'load_error'\n            }\n        \n        # Process SMPL poses (object array → tensor)\n        motion_tensor = self._process_motion_data(motion_data)\n        \n        # Ensure correct dimensions and sequence length\n        if motion_tensor.size(0) > self.sequence_length:\n            # Randomly crop to sequence length\n            start_idx = torch.randint(0, motion_tensor.size(0) - self.sequence_length + 1, (1,)).item()\n            motion_tensor = motion_tensor[start_idx:start_idx + self.sequence_length]\n        elif motion_tensor.size(0) < self.sequence_length:\n            # Pad with zeros\n            padding = self.sequence_length - motion_tensor.size(0)\n            motion_tensor = torch.cat([motion_tensor, torch.zeros(padding, motion_tensor.size(1))], dim=0)\n        \n        # Final validation\n        if motion_tensor.size() != torch.Size([self.sequence_length, 72]):\n            motion_tensor = torch.zeros(self.sequence_length, 72)\n        \n        return {\n            'motion': motion_tensor,        # [240, 72] SMPL poses\n            'motion_file': motion_file.stem # File identifier\n        }\n        \n    except Exception as e:\n        return {\n            'motion': torch.zeros(self.sequence_length, 72),\n            'motion_file': 'process_error'\n        }",
+      "explanation"     : "Loads AIST++ motion sequences and converts SMPL data to standardized tensors for training.",
+      "training_details": {
+        "input_format"  : "AIST++ .pkl files with SMPL poses",
+        "output_format" : "[240, 72] motion tensors",
+        "preprocessing" : ["Crop/Pad to 240 frames", "Convert object arrays", "Validate dimensions"],
+        "error_handling": "Fallback to zero tensors on errors"
+      }
+    },
+
+    "layer_freezing": {
+      "title"           : "Layer Freezing Control",
+      "category"        : "optimization",
+      "stage_relevance" : [1, 2, 3],
+      "layers_involved" : ["all"],
+      "file"            : "scripts/train_bailando.py",
+      "line_range"      : "75-95",
+      "complexity"      : "intermediate",
+      "code"            : "def setup_stage_training(model, stage, config):\n    \"\"\"\n    # Configure which layers are trainable for each stage\n    \"\"\"\n    if stage == 1:\n        # Stage 1: Only VQ-VAE parameters are trainable\n        for param in model.vq_vae.parameters():\n            param.requires_grad = True\n        \n        print(f\"✅ Stage 1: VQ-VAE parameters enabled for training\")\n        print(f\"📊 Trainable parameters: {sum(p.numel() for p in model.vq_vae.parameters() if p.requires_grad):,}\")\n        \n    elif stage == 2:\n        # Stage 2: Freeze VQ-VAE, enable GPT\n        for param in model.vq_vae.parameters():\n            param.requires_grad = False\n        for param in model.gpt.parameters():\n            param.requires_grad = True\n            \n        print(f\"❄️ Stage 2: VQ-VAE frozen\")\n        print(f\"✅ Stage 2: GPT parameters enabled for training\")\n        print(f\"📊 Trainable parameters: {sum(p.numel() for p in model.gpt.parameters() if p.requires_grad):,}\")\n        \n    elif stage == 3:\n        # Stage 3: VQ-VAE frozen, GPT + Critic trainable\n        for param in model.vq_vae.parameters():\n            param.requires_grad = False\n        for param in model.gpt.parameters():\n            param.requires_grad = True\n        for param in model.critic.parameters():\n            param.requires_grad = True\n            \n        print(f\"❄️ Stage 3: VQ-VAE frozen\")\n        print(f\"✅ Stage 3: GPT + Critic parameters enabled for training\")\n        gpt_params = sum(p.numel() for p in model.gpt.parameters() if p.requires_grad)\n        critic_params = sum(p.numel() for p in model.critic.parameters() if p.requires_grad)\n        print(f\"📊 Trainable parameters: GPT({gpt_params:,}) + Critic({critic_params:,}) = {gpt_params + critic_params:,}\")",
+      "explanation"     : "Explicit control of which layers are trainable in each stage using requires_grad flags.",
+      "training_details": {
+        "stage_1": "Only VQ-VAE trainable (~400K params)",
+        "stage_2": "VQ-VAE frozen, only GPT trainable (~60M params)",
+        "stage_3": "VQ-VAE frozen, GPT + Critic trainable (~60M + 130K params)"
+      }
+    },
+
+    "gradient_clipping": {
+      "title"           : "Gradient Clipping",
+      "category"        : "optimization",
+      "stage_relevance" : [1, 2, 3],
+      "layers_involved" : ["all"],
+      "file"            : "scripts/train_bailando.py",
+      "line_range"      : "170-185",
+      "complexity"      : "beginner",
+      "code"            : "# Gradient Clipping Implementation\ndef apply_gradient_clipping(model, config, stage):\n    \"\"\"\n    # Apply gradient clipping to prevent exploding gradients\n    \"\"\"\n    if 'gradient_clip' in config['training']:\n        clip_value = config['training']['gradient_clip']\n        \n        if stage == 1:\n            # Clip VQ-VAE gradients only\n            torch.nn.utils.clip_grad_norm_(\n                model.vq_vae.parameters(), \n                clip_value\n            )\n            print(f\"🔧 Applied gradient clipping (norm={clip_value}) to VQ-VAE\")\n            \n        elif stage == 2:\n            # Clip GPT gradients only\n            torch.nn.utils.clip_grad_norm_(\n                model.gpt.parameters(), \n                clip_value\n            )\n            print(f\"🔧 Applied gradient clipping (norm={clip_value}) to GPT\")\n            \n        elif stage == 3:\n            # Clip both GPT and Critic gradients\n            all_params = list(model.gpt.parameters()) + list(model.critic.parameters())\n            torch.nn.utils.clip_grad_norm_(\n                all_params, \n                clip_value\n            )\n            print(f\"🔧 Applied gradient clipping (norm={clip_value}) to GPT + Critic\")",
+      "explanation"     : "Gradient clipping implementation to prevent exploding gradients during training.",
+      "training_details": {
+        "clip_value": "1.0 (configurable)",
+        "method"    : "L2 norm clipping",
+        "applied_to": "Stage-specific parameter groups"
+      }
+    },
+
+    "bailando_model_complete": {
+      "title"           : "Complete Bailando Model",
+      "category"        : "base_architecture",
+      "stage_relevance" : [1, 2, 3],
+      "layers_involved" : ["vq_vae", "gpt", "critic"],
+      "file"            : "lib/models/bailando.py",
+      "line_range"      : "200-250",
+      "complexity"      : "advanced",
+      "code"            : "class BailandoModel(nn.Module):\n    \"\"\"\n    # Complete Bailando model combining VQ-VAE, GPT, and Actor-Critic\n    # Implements 3-stage training pipeline\n    \"\"\"\n    \n    def __init__(self, config: dict):\n        super().__init__()\n        \n        # Extract config parameters\n        motion_dim = config['motion_dim']      # 72\n        latent_dim = config['latent_dim']      # 256\n        codebook_size = config['codebook_size'] # 1024\n        gpt_layers = config['gpt_layers']      # 12\n        embed_dim = config['embed_dim']        # 512\n        \n        # VQ-VAE for choreographic memory (STAGE 1)\n        self.vq_vae = MotionVQVAE(\n            motion_dim=motion_dim,\n            latent_dim=latent_dim,\n            num_embeddings=codebook_size\n        )\n        \n        # GPT for sequence modeling (STAGE 2)\n        self.gpt = GPTModel(\n            vocab_size=codebook_size,\n            embed_dim=embed_dim,\n            num_heads=8,\n            num_layers=gpt_layers\n        )\n        \n        # Critic network for RL (STAGE 3)\n        self.critic = nn.Sequential(\n            nn.Linear(embed_dim, 256),\n            nn.ReLU(),\n            nn.Linear(256, 1)\n        )\n        \n        # Store config for later use\n        self.config = config\n    \n    def encode_motion(self, motion):\n        \"\"\"Encode motion to quantized codes\"\"\"\n        _, _, _, _, indices = self.vq_vae(motion)\n        return indices\n    \n    def decode_motion(self, indices):\n        \"\"\"Decode quantized codes to motion\"\"\"\n        quantized = self.vq_vae.vq.embedding(indices)\n        motion = self.vq_vae.decoder(quantized)\n        return motion\n    \n    def generate_dance(self, music_features, sequence_length=240):\n        \"\"\"Generate dance sequence from music\"\"\"\n        batch_size = 1\n        device = music_features.device\n        \n        # Start with random token\n        generated_tokens = torch.randint(0, self.config['codebook_size'], (batch_size, 1), device=device)\n        \n        # Autoregressive generation\n        for _ in range(sequence_length - 1):\n            logits = self.gpt(generated_tokens)\n            next_token_logits = logits[:, -1, :]\n            next_token = torch.multinomial(F.softmax(next_token_logits, dim=-1), 1)\n            generated_tokens = torch.cat([generated_tokens, next_token], dim=1)\n        \n        # Convert tokens to motion\n        motion_sequence = self.decode_motion(generated_tokens.squeeze(0))\n        return motion_sequence",
+      "explanation"     : "Complete Bailando model implementation combining all three components for the full 3-stage training pipeline.",
+      "training_details": {
+        "total_parameters": "~63M parameters",
+        "components"      : ["VQ-VAE (~400K)", "GPT (~60M)", "Critic (~130K)"],
+        "stage_usage"     : "Different components active in each stage"
+      }
+    }
+  },
+
+  "training_progression": {
+    "stage_1": {
+      "name"          : "VQ-VAE Training",
+      "duration"      : "100 epochs (~6-8 hours)",
+      "learning_rate" : "0.0001",
+      "optimizer"     : "Adam",
+      "trained_layers": [
+        "vq_vae.encoder.0.weight", "vq_vae.encoder.0.bias",
+        "vq_vae.encoder.2.weight", "vq_vae.encoder.2.bias", 
+        "vq_vae.encoder.4.weight", "vq_vae.encoder.4.bias",
+        "vq_vae.vq.embedding.weight",
+        "vq_vae.decoder.0.weight", "vq_vae.decoder.0.bias",
+        "vq_vae.decoder.2.weight", "vq_vae.decoder.2.bias",
+        "vq_vae.decoder.4.weight", "vq_vae.decoder.4.bias"
+      ],
+      "frozen_layers"   : [],
+      "total_parameters": "~400K parameters",
+      "memory_usage"    : "~2GB RAM",
+      "success_metrics" : {
+        "target_loss": "< 50.0",
+        "convergence": "~40-60 epochs"
+      }
+    },
+    "stage_2": {
+      "name"          : "GPT Training",
+      "duration"      : "50 epochs (~3-4 hours)",
+      "learning_rate" : "0.00003",
+      "optimizer"     : "Adam",
+      "trained_layers": [
+        "gpt.token_embedding.weight",
+        "gpt.pos_embedding",
+        "gpt.layers.*.self_attn.in_proj_weight",
+        "gpt.layers.*.self_attn.out_proj.weight",
+        "gpt.layers.*.linear1.weight", "gpt.layers.*.linear1.bias",
+        "gpt.layers.*.linear2.weight", "gpt.layers.*.linear2.bias",
+        "gpt.output_projection.weight", "gpt.output_projection.bias"
+      ],
+      "frozen_layers"   : ["vq_vae.*"],
+      "total_parameters": "~60M parameters",
+      "memory_usage"    : "~4GB RAM",
+      "success_metrics" : {
+        "target_loss": "< 0.5",
+        "perplexity" : "< 2.0",
+        "convergence": "~20-30 epochs"
+      }
+    },
+    "stage_3": {
+      "name"          : "Actor-Critic Training",
+      "duration"      : "30 epochs (~2-3 hours)",
+      "learning_rate" : "Actor: 0.00003, Critic: 0.0001",
+      "optimizer"     : "Adam with parameter groups",
+      "trained_layers": [
+        "gpt.layers.*.self_attn.in_proj_weight",
+        "gpt.layers.*.self_attn.out_proj.weight", 
+        "gpt.layers.*.linear1.weight", "gpt.layers.*.linear2.weight",
+        "gpt.output_projection.weight",
+        "critic.0.weight", "critic.0.bias",
+        "critic.2.weight", "critic.2.bias"
+      ],
+      "frozen_layers"   : ["vq_vae.*", "gpt.token_embedding.*", "gpt.pos_embedding"],
+      "total_parameters": "~60M parameters (GPT) + ~130K parameters (Critic)",
+      "memory_usage"    : "~5GB RAM",
+      "success_metrics" : {
+        "target_loss"   : "Stable decrease",
+        "beat_alignment": "> 0.8",
+        "motion_quality": "> 0.75"
+      }
+    }
+  },
+
+  "commands": {
+    "stage_1"           : "python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 1",
+    "stage_2"           : "python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 2",
+    "stage_3"           : "python scripts/train_bailando.py --config config/bailando_config_stable.yaml --stage 3",
+    "resume_latest"     : "python scripts/train_bailando.py --config config/bailando_config_stable.yaml --resume latest --stage {STAGE}",
+    "analyze_checkpoint": "python scripts/analyze_checkpoint.py --checkpoint outputs/checkpoints_stable/model_stage_{STAGE}_latest.pth"
+  }
+}

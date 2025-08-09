@@ -1,8 +1,3 @@
-# 🎭 BAILANDO: COMPLETE COMMANDS REFERENCE
-# ===============================================
-# All supported commands for Bailando AI Choreography System
-# Implementation of "Bailando: 3D Dance Generation by Actor-Critic GPT with Choreographic Memory" (CVPR 2022)
-# ===============================================
 
 # ===============================================
 # 🚀 CORE TRAINING COMMANDS
