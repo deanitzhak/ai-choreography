@@ -12,7 +12,9 @@ class ConnectionManager:
         await websocket.accept()
         self.connection_id_counter += 1
         connection_id = f"conn_{self.connection_id_counter}_{int(time.time())}"
+        
         if client_identifier:
+            # Remove existing connections for this client
             to_remove = []
             for conn_id, conn_data in self.active_connections.items():
                 if conn_data.get('client_identifier') == client_identifier:
@@ -25,6 +27,7 @@ class ConnectionManager:
                 if conn_id in self.active_connections:
                     del self.active_connections[conn_id]
                     print(f"📡 Replaced connection for client: {client_identifier}")
+        
         self.active_connections[connection_id] = {
             'websocket': websocket,
             'client_identifier': client_identifier or 'anonymous',
@@ -55,34 +58,93 @@ class ConnectionManager:
             return False
 
     async def broadcast(self, message: dict):
+        """Broadcast message to all connected clients"""
         if not self.active_connections:
             return
+        
         failed_connections = []
+        message_str = json.dumps(message)
+        
         for connection_id, conn_data in self.active_connections.items():
             try:
                 websocket = conn_data['websocket']
-                await websocket.send_text(json.dumps(message))
+                await websocket.send_text(message_str)
             except Exception as e:
+                print(f"⚠️ Failed to broadcast to {connection_id}: {e}")
                 failed_connections.append(connection_id)
+        
+        # Clean up failed connections
         for conn_id in failed_connections:
             if conn_id in self.active_connections:
                 del self.active_connections[conn_id]
 
-    # ✅ This was missing — now added
     async def handle_connection(self, websocket: WebSocket):
+        """Handle WebSocket connection with enhanced messaging"""
         client_id = websocket.query_params.get('client_id', 'anonymous')
         connection_id = await self.connect(websocket, client_id)
+        
         try:
+            # Send welcome message
+            await self.send_personal_message({
+                'type': 'welcome',
+                'client_id': client_id,
+                'connection_id': connection_id,
+                'timestamp': datetime.now().isoformat(),
+                'message': 'Connected to Bailando Training Dashboard'
+            }, websocket)
+            
+            # Send current training status
+            try:
+                # Import here to avoid circular imports
+                from routes.training_routes import training_status
+                await self.send_personal_message({
+                    'type': 'training_status',
+                    'status': training_status,
+                    'timestamp': datetime.now().isoformat()
+                }, websocket)
+            except ImportError:
+                pass
+            
             while True:
                 data = await websocket.receive_text()
                 message = json.loads(data)
+                
+                # Handle different message types
                 if message.get('type') == 'ping':
-                    pong = {"type": "pong", "timestamp": datetime.now().isoformat()}
+                    pong = {
+                        "type": "pong", 
+                        "timestamp": datetime.now().isoformat(),
+                        "connection_id": connection_id
+                    }
                     await self.send_personal_message(pong, websocket)
+                    
+                elif message.get('type') == 'request_status':
+                    # Send current training status
+                    try:
+                        from routes.training_routes import training_status
+                        await self.send_personal_message({
+                            'type': 'training_status',
+                            'status': training_status,
+                            'timestamp': datetime.now().isoformat()
+                        }, websocket)
+                    except ImportError:
+                        pass
+                
+                elif message.get('type') == 'request_logs':
+                    # Send recent training logs
+                    try:
+                        from routes.training_routes import get_training_messages
+                        messages = get_training_messages()
+                        for msg in messages:
+                            await self.send_personal_message(msg, websocket)
+                    except ImportError:
+                        pass
+                
         except WebSocketDisconnect:
             self.disconnect(websocket)
         except Exception as e:
             print(f"❌ WebSocket error: {e}")
             self.disconnect(websocket)
 
+# Create the global manager instance
 manager = ConnectionManager()

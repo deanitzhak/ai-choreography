@@ -1,32 +1,60 @@
-# 2. CREATE: config/bailando_config_stable.yaml
-# Stable CPU configuration to fix loss explosion
+# Guaranteed CPU-only configuration
+# Save this as config/bailando_config_cpu.yaml
 
-model        : 
-motion_dim   : 72
-latent_dim   : 128          # Reduced from 256
-codebook_size: 512       # Reduced from 1024
-gpt_layers   : 6            # Reduced from 12
-embed_dim    : 256           # Reduced from 512
+model:
+  motion_dim: 72
+  latent_dim: 256
+  codebook_size: 1024
+  gpt_layers: 12
+  embed_dim: 512
 
-training           : 
-vq_vae_epochs      : 50        # Reduced for faster iteration
-gpt_epochs         : 25
-actor_critic_epochs: 15
-batch_size         : 4            # Reduced from 16 for CPU
-learning_rate      : 0.00001   # 10x smaller than current (critical!)
-gradient_clip_norm : 1.0  # NEW: Prevent gradient explosion
-save_every         : 5            # More frequent saves
+training:
+  learning_rate: 0.0001
+  batch_size: 8
+  epochs: 100
+  save_interval: 10
+  save_every: 10
+  validation_interval: 10
+  gradient_clip: 1.0
+  vq_vae_epochs: 100
+  gpt_epochs: 50
+  critic_epochs: 25
+  vq_vae_lr: 0.0001
+  gpt_lr: 0.00003
+  critic_lr: 0.0001
+  warmup_epochs: 5
+  scheduler_patience: 10
+  early_stopping_patience: 20
 
-data           : 
-dataset_path   : "data/AIST_PLUS_PLUS"
-sequence_length: 120     # Reduced from 240 for CPU
-train_split    : 0.8
-val_split      : 0.2
+data:
+  dataset_path: "data/AIST_PLUS_PLUS"
+  motion_dir: "motions"
+  keypoints_dir: "keypoints3d"
+  splits_dir: "splits"
+  sequence_length: 240
+  fps: 30
 
-paths      : 
-checkpoints: "outputs/checkpoints_stable"
-logs       : "outputs/logs_stable"
-reports    : "outputs/reports_stable"
-videos     : "outputs/videos_stable"
-
+# ✅ CRITICAL: Set device to CPU
 device: "cpu"
+
+paths:
+  checkpoints: "outputs/checkpoints"
+  logs: "outputs/logs"
+  models: "outputs/models"
+
+logging:
+  level: "INFO"
+  log_interval: 10
+  tensorboard: true
+
+loss_weights:
+  reconstruction: 1.0
+  commitment: 0.25
+  codebook: 1.0
+  perceptual: 0.1
+
+optimization:
+  beta1: 0.9
+  beta2: 0.999
+  eps: 0.00000001
+  weight_decay: 0.01

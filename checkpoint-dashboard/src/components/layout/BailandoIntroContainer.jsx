@@ -4,10 +4,10 @@ import { ChevronDown, ChevronRight, BookOpen, Code, Brain, Database, MemoryStick
 
 // Import all the small components
 import SimpleArchitectureFlow from './SimpleArchitectureFlow';
-import DataMatrixVisualizer from './DataMatrixVisualizer';
-import LossPointSystem from './LossPointSystem';
+import DataMatrixVisualizer from '../charts/DataMatrixVisualizer';
+import LossPointSystem from '../charts/LossPointSystem';
 import SimpleMemoryContext from './SimpleMemoryContext';
-import CodeSnippetViewer from './CodeSnippetViewer';
+import CodeSnippetViewer from '../code/CodeSnippetViewer';
 
 const BailandoIntroContainer = () => {
   const [activeSection, setActiveSection] = useState('architecture');

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, CheckCircle, Activity, Terminal } from 'lucide-react';
 
 // Import our lightweight service components
-import { useTrainingService } from '../api/TrainingService';
+import { useTrainingService } from '../../api/TrainingService';
 import TrainingStatusCards from './TrainingStatusCards';
 import EnhancedTrainingControls from './TrainingControls';
 

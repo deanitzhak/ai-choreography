@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, Zap, Settings, Monitor, Play, Database,
-  Brain, Activity, Terminal, Cpu
+  Brain, Activity, Terminal, Cpu, Code  // Added Code import
 } from 'lucide-react';
 
 // Import components
-import Dashboard from './Services/Dashboard';
-import RealTimeTrainingPanel from './Services/RealTimeTrainingPanel';
+import Dashboard from './components/Dashboard';
+import RealTimeTrainingPanel from './components/layout/RealTimeTrainingPanel';
+import CodeExplorer from './components/code/CodeExplorer';
 
 const MainApp = () => {
   const [activeView, setActiveView] = useState('dashboard');
@@ -40,6 +41,13 @@ const MainApp = () => {
       icon: Monitor,
       description: 'Hardware usage, memory, and system diagnostics',
       color: 'orange'
+    },
+    {
+      id: 'code',
+      title: 'Code Explorer',
+      icon: Code,
+      description: 'Explore and edit code snippets',
+      color: 'cyan'
     }
   ];
 
@@ -48,7 +56,8 @@ const MainApp = () => {
       blue: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-400', border: 'border-blue-500' },
       green: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-400', border: 'border-green-500' },
       purple: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-400', border: 'border-purple-500' },
-      orange: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-400', border: 'border-orange-500' }
+      orange: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-400', border: 'border-orange-500' },
+      cyan: { bg: 'bg-cyan-600', hover: 'hover:bg-cyan-700', text: 'text-cyan-400', border: 'border-cyan-500' }  // Added cyan support
     };
     return colors[color];
   };
@@ -63,6 +72,8 @@ const MainApp = () => {
         return <ModelOptimizationPanel />;
       case 'monitoring':
         return <SystemMonitorPanel />;
+      case 'code':
+        return <CodeExplorer />;
       default:
         return <Dashboard />;
     }

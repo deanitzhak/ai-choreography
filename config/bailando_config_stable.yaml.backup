@@ -1,0 +1,38 @@
+# Backup configuration for Bailando training
+
+model:
+  motion_dim: 72
+  latent_dim: 256
+  codebook_size: 1024
+  gpt_layers: 12
+  embed_dim: 512
+  num_heads: 8
+  dropout: 0.1
+
+training:
+  vq_vae_epochs: 100
+  gpt_epochs: 50
+  actor_critic_epochs: 30
+  batch_size: 16
+  learning_rate: 0.0001
+  gradient_clip_norm: 5.0
+  save_every: 10
+  warmup_steps: 1000
+  scheduler: "cosine"
+  early_stopping_patience: 15
+
+data:
+  dataset_path: "data/AIST_PLUS_PLUS"
+  sequence_length: 240
+  train_split: 0.8
+  val_split: 0.2
+  num_workers: 4
+  pin_memory: true
+
+paths:
+  checkpoints: "outputs/checkpoints"
+  logs: "outputs/logs"
+  reports: "outputs/reports"
+  videos: "outputs/videos"
+
+device: "cuda"
