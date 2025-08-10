@@ -113,7 +113,7 @@ const Dashboard = () => {
           )}
 
           {/* AI-Generated Conclusions Section */}
-          <AIConclusionsSection />
+          {/* <AIConclusionsSection /> */}
         </div>
       </div>
     </div>
